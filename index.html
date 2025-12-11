@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Garden Notepad — Zeli's Garden</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&family=Caveat:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{
+      --sky-1: #cfeefd; /* pastel sky light */
+      --sky-2: #a7e0ff; /* sky medium */
+      --sky-3: #7fc4ff; /* sky deep */
+      --green-1: #e8f8ec; /* very light leaf */
+      --green-2: #c9efd1; /* soft mint */
+      --green-3: #8ecf9a; /* leafy */
+      --accent: #ffd6e0;
+      --card: rgba(255,255,255,0.9);
+      --muted: #6b6b6b;
+      --shadow: 0 8px 20px rgba(51,51,51,0.08);
+      --notepad-bg: #fffaf0;
+      --notepad-lines: rgba(200,200,200,0.5);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Quicksand,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+
+    body{
+      background: linear-gradient(180deg,var(--sky-1),var(--sky-2) 40%,var(--green-1) 60%,var(--green-2));
+      background-attachment: fixed;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:24px;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    .app {
+      width:100%;max-width:1100px;height:80vh;min-height:520px;position:relative;border-radius:18px;overflow:hidden;box-shadow:var(--shadow);
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,255,250,0.65));
+      border:1px solid rgba(255,255,255,0.6);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* top garden header */
+    .header{
+      height:120px;padding:18px 22px;display:flex;align-items:center;gap:18px;background:linear-gradient(90deg,rgba(255,255,255,0.3),transparent);
+    }
+    .logo{
+      width:84px;height:84px;border-radius:14px;background:radial-gradient(circle at 30% 20%,#fff8,transparent),linear-gradient(180deg,var(--green-3),var(--green-2));display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;box-shadow:0 6px 12px rgba(0,0,0,0.08);
+      font-family:Caveat,Quicksand;transform:rotate(-6deg)
+    }
+    .title{
+      display:flex;flex-direction:column;justify-content:center;
+    }
+    .title h1{margin:0;font-size:20px}
+    .title p{margin:0;color:var(--muted);font-size:13px}
+
+    .toolbar{
+      display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto;
+    }
+    .toolbar select,.toolbar input[type=number],.toolbar button,.toolbar input[type=color]{
+      padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.9);cursor:pointer;font-size:14px
+    }
+    .toolbar button{display:inline-flex;align-items:center;gap:6px}
+
+    /* main content area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* notes list view */
+    .notes-list {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .note-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .note-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+
+    .note-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .note-card p {
+      margin: 0;
+      flex: 1;
+      overflow: hidden;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .note-card .note-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .note-card .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.8);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .note-card:hover .delete-btn {
+      opacity: 1;
+    }
+
+    .add-note-btn {
+      background: var(--green-2);
+      border: 2px dashed var(--green-3);
+      color: var(--green-3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .add-note-btn i {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    /* note editor view */
+    .note-editor {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 0 20px 20px;
+    }
+
+    .note-editor.active {
+      display: flex;
+    }
+
+    .editor-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+    .editor-toolbar select,input[type=range]{padding:6px}
+
+    .editor-container {
+      flex:1;
+      position: relative;
+      background: var(--notepad-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #eee;
+    }
+
+    .editor{
+      width: 100%;
+      height: 100%;
+      border-radius:10px;
+      padding:20px 16px;
+      background:transparent;
+      outline:none;
+      border:none;
+      min-height:220px;
+      resize:none;
+      font-size:16px;
+      line-height:1.6;
+      color:#222;
+      font-family: 'Roboto Mono', monospace;
+      background-image: repeating-linear-gradient(
+        transparent,
+        transparent 28px,
+        var(--notepad-lines) 28px,
+        var(--notepad-lines) 29px
+      );
+      background-size: 100% 29px;
+      z-index: 1;
+    }
+
+    /* sticker area (overlay) */
+    .canvas-area{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      border-radius:10px;
+      z-index: 2;
+    }
+
+    /* sticker element */
+    .sticker{
+      position:absolute;
+      touch-action:none;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:6px;
+      border-radius:8px;
+      background:transparent;
+      pointer-events:auto;
+      cursor:grab;
+      transform-origin:center center;
+      will-change:transform;
+      z-index: 10;
+    }
+
+    .sticker .emoji-content {
+      font-size: 32px;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .handle{
+      width:12px;height:12px;border-radius:50%;background:white;border:1px solid #ccc;position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;font-size:10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .sticker:hover .handle {
+      opacity: 1;
+    }
+    .handle.resize{right:-8px;bottom:-8px}
+    .handle.rotate{left:50%;transform:translateX(-50%);top:-18px}
+    .handle.del{right:-8px;top:-8px}
+
+    .right-panel{width:40%;display:flex;flex-direction:column;gap:12px}
+    .panel{background:rgba(255,255,255,0.85);padding:12px;border-radius:12px}
+
+    .sticker-btns{display:flex;gap:8px;flex-wrap:wrap}
+    .sticker-btns button{padding:8px;border-radius:8px;border:0;background:transparent;font-size:22px;cursor:pointer}
+
+    .controls-row{display:flex;gap:8px;align-items:center}
+
+    .small{font-size:12px;padding:6px 8px}
+
+    /* footer */
+    .footer{position:absolute;left:18px;bottom:18px;right:18px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+
+    /* find/replace dialog */
+    .find-replace-dialog {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 300px;
+    }
+    .find-replace-dialog.active {
+      display: flex;
+    }
+    .find-replace-row {
+      display: flex;
+      gap: 8px;
+    }
+    .find-replace-row input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .find-replace-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* back button */
+    .back-btn {
+      background: var(--green-2);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* responsive */
+    @media (max-width:900px){
+      .main{flex-direction:column}
+      .left{width:100%}
+      .right-panel{width:100%}
+      .header{height:100px}
+      .notes-list {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="header">
+      <div class="logo">🌿</div>
+      <div class="title">
+        <h1>Garden Notepad</h1>
+        <p>Tulis, hias, simpan — seperti diary di kebun.</p>
+      </div>
+
+      <div class="toolbar" id="topToolbar">
+        <button id="themeToggle"><i class="fas fa-palette"></i> Theme</button>
+        <button id="exportAllBtn"><i class="fas fa-download"></i> Export All</button>
+        <button id="fullscreenBtn"><i class="fas fa-expand"></i> Fullscreen</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <!-- Notes List View -->
+      <div class="notes-list" id="notesList">
+        <div class="note-card add-note-btn" id="addNoteBtn">
+          <i class="fas fa-plus-circle"></i>
+          <span>Buat Catatan Baru</span>
+        </div>
+      </div>
+
+      <!-- Note Editor View -->
+      <div class="note-editor" id="noteEditor">
+        <button class="back-btn" id="backBtn">
+          <i class="fas fa-arrow-left"></i> Kembali ke Daftar Catatan
+        </button>
+
+        <div class="editor-toolbar">
+          <div class="controls-row">
+            <label class="small">Judul: </label>
+            <input id="noteTitle" placeholder="Judul singkat..." style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+          </div>
+          <div class="controls-row" style="margin-left:auto">
+            <button id="saveBtn" class="small"><i class="fas fa-save"></i> Save</button>
+            <button id="clearBtn" class="small"><i class="fas fa-trash"></i> Clear</button>
+          </div>
+        </div>
+
+        <div class="editor-container">
+          <textarea id="editor" class="editor" placeholder="Tulis catatanmu di sini..."></textarea>
+          <!-- overlay area for stickers -->
+          <div class="canvas-area" id="canvas"></div>
+        </div>
+
+        <!-- Find/Replace Dialog -->
+        <div class="find-replace-dialog" id="findReplaceDialog">
+          <div class="find-replace-row">
+            <input type="text" id="findInput" placeholder="Find...">
+          </div>
+          <div class="find-replace-row">
+            <input type="text" id="replaceInput" placeholder="Replace with...">
+          </div>
+          <div class="find-replace-buttons">
+            <button id="findNextBtn">Find Next</button>
+            <button id="replaceBtn">Replace</button>
+            <button id="replaceAllBtn">Replace All</button>
+            <button id="closeFindBtn">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Garden Notepad — otomatis simpan ke browser</div>
+      <div id="status">Ready</div>
+    </div>
+  </div>
+
+  <script>
+    // helpers
+    const $ = (sel) => document.querySelector(sel);
+    const canvas = $('#canvas');
+    const editor = $('#editor');
+    const title = $('#noteTitle');
+    const status = $('#status');
+    const notesList = $('#notesList');
+    const noteEditor = $('#noteEditor');
+    const findReplaceDialog = $('#findReplaceDialog');
+    const findInput = $('#findInput');
+    const replaceInput = $('#replaceInput');
+
+    // state
+    const NOTES_KEY = 'garden_notepad_notes_v2';
+    const HISTORY_KEY = 'garden_notepad_history';
+    const MAX_HISTORY = 50;
+    let notes = [];
+    let currentNoteId = null;
+    let history = [];
+    let historyIndex = -1;
+    let idCounter = Date.now();
+    let currentFindIndex = -1;
+
+    // Initialize app
+    function initApp() {
+      loadNotes();
+      renderNotesList();
+      
+      // Event listeners
+      $('#addNoteBtn').addEventListener('click', createNewNote);
+      $('#backBtn').addEventListener('click', backToNotesList);
+      $('#saveBtn').addEventListener('click', saveCurrentNote);
+      $('#clearBtn').addEventListener('click', clearCurrentNote);
+      $('#exportAllBtn').addEventListener('click', exportAllNotes);
+      $('#fullscreenBtn').addEventListener('click', toggleFullscreen);
+      $('#themeToggle').addEventListener('click', showThemeOptions);
+      
+      // Editor toolbar
+      $('#fontFamily').addEventListener('change', e => { 
+        editor.style.fontFamily = e.target.value; 
+        $('#fontSelect').value = e.target.value; 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+      
+      $('#fontSize').addEventListener('input', e => { 
+        editor.style.fontSize = e.target.value + 'px'; 
+        $('#sizeControl').value = e.target.value; 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+
+      $('#boldBtn').addEventListener('click', ()=>{ 
+        editor.style.fontWeight = (editor.style.fontWeight==='700' ? '400' : '700'); 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+      
+      $('#italicBtn').addEventListener('click', ()=>{ 
+        editor.style.fontStyle = (editor.style.fontStyle==='italic' ? 'normal' : 'italic'); 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+      
+      $('#underlineBtn').addEventListener('click', ()=>{ 
+        editor.style.textDecoration = (editor.style.textDecoration==='underline' ? '':'underline'); 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+
+      $('#alignLeft').addEventListener('click', ()=>{
+        editor.style.textAlign='left';
+        $('#alignSelect').value='left';
+        if(currentNoteId) saveCurrentNote(true);
+      });
+      
+      $('#alignCenter').addEventListener('click', ()=>{
+        editor.style.textAlign='center';
+        $('#alignSelect').value='center';
+        if(currentNoteId) saveCurrentNote(true);
+      });
+      
+      $('#alignRight').addEventListener('click', ()=>{
+        editor.style.textAlign='right';
+        $('#alignSelect').value='right';
+        if(currentNoteId) saveCurrentNote(true);
+      });
+      
+      $('#colorControl').addEventListener('input', e=>{ 
+        editor.style.color = e.target.value; 
+        $('#textColor').value = e.target.value; 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+
+      // Find/Replace buttons
+      $('#findBtn').addEventListener('click', showFindDialog);
+      $('#closeFindBtn').addEventListener('click', hideFindDialog);
+      $('#findNextBtn').addEventListener('click', findNext);
+      $('#replaceBtn').addEventListener('click', replace);
+      $('#replaceAllBtn').addEventListener('click', replaceAll);
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        // Ctrl+Z for undo
+        if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          undo();
+        }
+        // Ctrl+Shift+Z or Ctrl+Y for redo
+        if ((e.ctrlKey && e.shiftKey && e.key === 'z') || (e.ctrlKey && e.key === 'y')) {
+          e.preventDefault();
+          redo();
+        }
+        // Ctrl+F for find
+        if (e.ctrlKey && e.key === 'f') {
+          e.preventDefault();
+          showFindDialog();
+        }
+        // Escape to close find dialog
+        if (e.key === 'Escape' && findReplaceDialog.classList.contains('active')) {
+          hideFindDialog();
+        }
+      });
+
+      // Auto-save
+      const debouncedSave = debounce(() => {
+        if(currentNoteId) saveCurrentNote(true);
+      }, 700);
+
+      editor.addEventListener('input', debouncedSave);
+      title.addEventListener('input', debouncedSave);
+    }
+
+    // Load notes from localStorage
+    function loadNotes() {
+      const savedNotes = localStorage.getItem(NOTES_KEY);
+      if (savedNotes) {
+        try {
+          notes = JSON.parse(savedNotes);
+        } catch (e) {
+          console.error('Failed to load notes:', e);
+          notes = [];
+        }
+      }
+    }
+
+    // Save notes to localStorage
+    function saveNotes() {
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      status.textContent = 'All notes saved ' + new Date().toLocaleTimeString();
+    }
+
+    // Render notes list
+    function renderNotesList() {
+      // Clear existing notes except the add button
+      const existingNotes = notesList.querySelectorAll('.note-card:not(.add-note-btn)');
+      existingNotes.forEach(note => note.remove());
+      
+      // Add notes
+      notes.forEach(note => {
+        const noteCard = document.createElement('div');
+        noteCard.className = 'note-card';
+        noteCard.dataset.id = note.id;
+        
+        const noteTitle = document.createElement('h3');
+        noteTitle.textContent = note.title || 'Untitled';
+        
+        const noteContent = document.createElement('p');
+        noteContent.textContent = note.text || '';
+        
+        const noteDate = document.createElement('div');
+        noteDate.className = 'note-date';
+        noteDate.textContent = new Date(note.modified).toLocaleString();
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteNote(note.id);
+        });
+        
+        noteCard.appendChild(noteTitle);
+        noteCard.appendChild(noteContent);
+        noteCard.appendChild(noteDate);
+        noteCard.appendChild(deleteBtn);
+        
+        noteCard.addEventListener('click', () => openNote(note.id));
+        
+        notesList.appendChild(noteCard);
+      });
+    }
+
+    // Create a new note
+    function createNewNote() {
+      const newNote = {
+        id: 'note_' + Date.now(),
+        title: '',
+        text: '',
+        stickers: [],
+        created: new Date().toISOString(),
+        modified: new Date().toISOString()
+      };
+      
+      notes.unshift(newNote);
+      saveNotes();
+      renderNotesList();
+      openNote(newNote.id);
+    }
+
+    // Open a note for editing
+    function openNote(noteId) {
+      const note = notes.find(n => n.id === noteId);
+      if (!note) return;
+      
+      currentNoteId = noteId;
+      
+      // Load note content
+      title.value = note.title || '';
+      editor.value = note.text || '';
+      
+      // Clear existing stickers
+      document.querySelectorAll('.sticker').forEach(s => s.remove());
+      
+      // Restore stickers
+      if (Array.isArray(note.stickers)) {
+        note.stickers.forEach(s => {
+          createStickerFromData(s);
+        });
+      }
+      
+      // Show editor view
+      notesList.style.display = 'none';
+      noteEditor.classList.add('active');
+      
+      status.textContent = 'Editing: ' + (note.title || 'Untitled');
+    }
+
+    // Save current note
+    function saveCurrentNote(autoSave = false) {
+      if (!currentNoteId) return;
+      
+      const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+      if (noteIndex === -1) return;
+      
+      // Update note
+      notes[noteIndex].title = title.value;
+      notes[noteIndex].text = editor.value;
+      notes[noteIndex].stickers = Array.from(document.querySelectorAll('.sticker')).map(s => ({
+        id: s.dataset.id,
+        emoji: s.dataset.emoji,
+        tx: parseFloat(s.dataset.tx||0),
+        ty: parseFloat(s.dataset.ty||0),
+        rot: parseFloat(s.dataset.rot||0),
+        scale: parseFloat(s.dataset.scale||1),
+        z: parseInt(s.style.zIndex||0)
+      }));
+      notes[noteIndex].modified = new Date().toISOString();
+      
+      saveNotes();
+      
+      if (!autoSave) {
+        status.textContent = 'Note saved: ' + (title.value || 'Untitled');
+      }
+    }
+
+    // Clear current note
+    function clearCurrentNote() {
+      if (!currentNoteId) return;
+      
+      if (confirm('Hapus semua konten catatan ini?')) {
+        editor.value = '';
+        title.value = '';
+        document.querySelectorAll('.sticker').forEach(s => s.remove());
+        saveCurrentNote();
+        status.textContent = 'Note cleared';
+      }
+    }
+
+    // Delete a note
+    function deleteNote(noteId) {
+      if (!confirm('Hapus catatan ini?')) return;
+      
+      notes = notes.filter(n => n.id !== noteId);
+      saveNotes();
+      renderNotesList();
+      
+      if (currentNoteId === noteId) {
+        backToNotesList();
+      }
+    }
+
+    // Go back to notes list
+    function backToNotesList() {
+      if (currentNoteId) {
+        saveCurrentNote();
+        currentNoteId = null;
+      }
+      
+      noteEditor.classList.remove('active');
+      notesList.style.display = 'grid';
+      status.textContent = 'Ready';
+    }
+
+    // Export all notes
+    function exportAllNotes() {
+      const allNotesText = notes.map(note => {
+        return `=== ${note.title || 'Untitled'} ===\nCreated: ${new Date(note.created).toLocaleString()}\nModified: ${new Date(note.modified).toLocaleString()}\n\n${note.text}\n\n`;
+      }).join('---\n\n');
+      
+      const blob = new Blob([allNotesText], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'garden-notes-export.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      status.textContent = 'All notes exported';
+    }
+
+    // Toggle fullscreen
+    function toggleFullscreen() {
+      const elem = document.documentElement;
+      if(!document.fullscreenElement){
+        if(elem.requestFullscreen) elem.requestFullscreen();
+        else if(elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      } else {
+        if(document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Show theme options
+    function showThemeOptions() {
+      const themes = ['pastel', 'cottage', 'sky', 'notepad'];
+      const currentTheme = localStorage.getItem('garden_notepad_theme') || 'pastel';
+      
+      const nextThemeIndex = (themes.indexOf(currentTheme) + 1) % themes.length;
+      const nextTheme = themes[nextThemeIndex];
+      
+      setTheme(nextTheme);
+      localStorage.setItem('garden_notepad_theme', nextTheme);
+      status.textContent = `Theme changed to: ${nextTheme}`;
+    }
+
+    // Set theme
+    function setTheme(name){
+      if(name==='pastel'){
+        document.documentElement.style.setProperty('--sky-1','#e6f9ff');
+        document.documentElement.style.setProperty('--sky-2','#cfeefd');
+        document.documentElement.style.setProperty('--green-1','#f0fbf2');
+        document.documentElement.style.setProperty('--green-2','#dff9e6');
+        document.documentElement.style.setProperty('--notepad-bg', '#fffaf0');
+      } else if(name==='cottage'){
+        document.documentElement.style.setProperty('--sky-1','#fff7ec');
+        document.documentElement.style.setProperty('--sky-2','#f6efd8');
+        document.documentElement.style.setProperty('--green-1','#f7f3ee');
+        document.documentElement.style.setProperty('--green-2','#e6f3de');
+        document.documentElement.style.setProperty('--notepad-bg', '#f9f5f0');
+      } else if(name==='sky'){
+        document.documentElement.style.setProperty('--sky-1','#d9f1ff');
+        document.documentElement.style.setProperty('--sky-2','#bfe8ff');
+        document.documentElement.style.setProperty('--green-1','#f1fbf6');
+        document.documentElement.style.setProperty('--green-2','#e7f7ee');
+        document.documentElement.style.setProperty('--notepad-bg', '#f0f8ff');
+      } else if(name==='notepad'){
+        document.documentElement.style.setProperty('--sky-1','#f5f5f5');
+        document.documentElement.style.setProperty('--sky-2','#e0e0e0');
+        document.documentElement.style.setProperty('--green-1','#f5f5f5');
+        document.documentElement.style.setProperty('--green-2','#e0e0e0');
+        document.documentElement.style.setProperty('--notepad-bg', '#ffffff');
+        document.documentElement.style.setProperty('--notepad-lines', '#cccccc');
+      }
+    }
+
+    // sticker factory
+    function addSticker(emoji){
+      const obj = {id: 's' + (++idCounter), emoji, tx: 40 + Math.random()*120, ty: 40 + Math.random()*120, rot: 0, scale: 1};
+      createStickerFromData(obj);
+      if(currentNoteId) saveCurrentNote(true);
+    }
+
+    function createStickerFromData(obj){
+      const el = document.createElement('div');
+      el.className = 'sticker';
+      el.dataset.id = obj.id;
+      el.dataset.emoji = obj.emoji;
+      el.dataset.tx = obj.tx || 40;
+      el.dataset.ty = obj.ty || 40;
+      el.dataset.rot = obj.rot || 0;
+      el.dataset.scale = obj.scale || 1;
+      el.style.left = '0px';
+      el.style.top = '0px';
+      el.style.zIndex = obj.z || 10;
+
+      // content
+      const inner = document.createElement('div');
+      inner.className = 'emoji-content';
+      inner.textContent = obj.emoji;
+      el.appendChild(inner);
+
+      // handles
+      const resize = document.createElement('div');
+      resize.className='handle resize';
+      resize.title='Resize';
+      el.appendChild(resize);
+
+      const rotate = document.createElement('div');
+      rotate.className='handle rotate';
+      rotate.title='Rotate';
+      el.appendChild(rotate);
+
+      const del = document.createElement('div');
+      del.className='handle del';
+      del.textContent='✖';
+      del.title='Delete';
+      el.appendChild(del);
+
+      // apply initial transform
+      applyTransform(el);
+
+      canvas.appendChild(el);
+
+      // pointer drag
+      let dragging = false, dragStartX=0, dragStartY=0, startTx=0, startTy=0;
+      el.addEventListener('pointerdown', e => {
+        if(e.target === resize || e.target === rotate || e.target === del) return; // separate handlers
+        dragging = true; 
+        el.setPointerCapture(e.pointerId); 
+        el.style.cursor='grabbing';
+        el.style.zIndex = getMaxZIndex() + 1;
+        dragStartX = e.clientX; 
+        dragStartY = e.clientY; 
+        startTx = parseFloat(el.dataset.tx||0); 
+        startTy = parseFloat(el.dataset.ty||0);
+      });
+      
+      window.addEventListener('pointermove', e => {
+        if(!dragging) return;
+        const dx = e.clientX - dragStartX; 
+        const dy = e.clientY - dragStartY;
+        el.dataset.tx = startTx + dx; 
+        el.dataset.ty = startTy + dy; 
+        applyTransform(el);
+      });
+      
+      window.addEventListener('pointerup', e => { 
+        if(dragging){
+          dragging=false;
+          el.style.cursor='grab'; 
+          if(currentNoteId) saveCurrentNote(true);
+        } 
+      });
+
+      // resize
+      let resizing=false, resizeStart=0, startScale=1;
+      resize.addEventListener('pointerdown', e => { 
+        e.stopPropagation(); 
+        resizing=true; 
+        resize.setPointerCapture(e.pointerId); 
+        resizeStart = e.clientX; 
+        startScale = parseFloat(el.dataset.scale||1); 
+      });
+      
+      window.addEventListener('pointermove', e => {
+        if(!resizing) return; 
+        const d = (e.clientX - resizeStart)/100; 
+        el.dataset.scale = Math.max(0.3, startScale + d); 
+        applyTransform(el);
+      });
+      
+      window.addEventListener('pointerup', e => { 
+        if(resizing){
+          resizing=false; 
+          if(currentNoteId) saveCurrentNote(true);
+        } 
+      });
+
+      // rotate
+      let rotating=false, rotateStartAngle=0, startRot=0;
+      rotate.addEventListener('pointerdown', e => { 
+        e.stopPropagation(); 
+        rotating=true; 
+        rotate.setPointerCapture(e.pointerId); 
+        const r = el.getBoundingClientRect(); 
+        rotateStartAngle = Math.atan2(e.clientY - (r.top+r.height/2), e.clientX - (r.left+r.width/2)); 
+        startRot = parseFloat(el.dataset.rot||0); 
+      });
+      
+      window.addEventListener('pointermove', e => {
+        if(!rotating) return; 
+        const r = el.getBoundingClientRect(); 
+        const angleNow = Math.atan2(e.clientY - (r.top+r.height/2), e.clientX - (r.left+r.width/2)); 
+        const deg = (angleNow - rotateStartAngle) * 180 / Math.PI; 
+        el.dataset.rot = startRot + deg; 
+        applyTransform(el);
+      });
+      
+      window.addEventListener('pointerup', e => { 
+        if(rotating){
+          rotating=false; 
+          if(currentNoteId) saveCurrentNote(true);
+        } 
+      });
+
+      // delete
+      del.addEventListener('click', e => { 
+        e.stopPropagation(); 
+        el.remove(); 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+
+      // double click to edit emoji
+      el.addEventListener('dblclick', e => {
+        const newEmoji = prompt('Ganti sticker (emoji atau teks):', el.dataset.emoji) || el.dataset.emoji;
+        el.dataset.emoji = newEmoji; 
+        inner.textContent = newEmoji; 
+        if(currentNoteId) saveCurrentNote(true);
+      });
+
+      return el;
+    }
+
+    function getMaxZIndex() {
+      const stickers = document.querySelectorAll('.sticker');
+      let maxZ = 10;
+      stickers.forEach(s => {
+        const z = parseInt(s.style.zIndex || 0);
+        if (z > maxZ) maxZ = z;
+      });
+      return maxZ;
+    }
+
+    function applyTransform(el){
+      const tx = parseFloat(el.dataset.tx||0);
+      const ty = parseFloat(el.dataset.ty||0);
+      const rot = parseFloat(el.dataset.rot||0);
+      const scale = parseFloat(el.dataset.scale||1);
+      el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${scale})`;
+    }
+
+    // Find and replace functionality
+    function showFindDialog() {
+      findReplaceDialog.classList.add('active');
+      findInput.focus();
+    }
+
+    function hideFindDialog() {
+      findReplaceDialog.classList.remove('active');
+      currentFindIndex = -1;
+    }
+
+    function findNext() {
+      const searchTerm = findInput.value.trim();
+      if (!searchTerm) return;
+      
+      const text = editor.value;
+      const index = text.indexOf(searchTerm, currentFindIndex + 1);
+      
+      if (index !== -1) {
+        currentFindIndex = index;
+        editor.focus();
+        editor.setSelectionRange(index, index + searchTerm.length);
+        status.textContent = `Found at position ${index}`;
+      } else {
+        status.textContent = 'Not found';
+      }
+    }
+
+    function replace() {
+      const searchTerm = findInput.value.trim();
+      const replaceTerm = replaceInput.value;
+      
+      if (!searchTerm) return;
+      
+      const text = editor.value;
+      const index = text.indexOf(searchTerm, currentFindIndex);
+      
+      if (index !== -1) {
+        editor.value = text.substring(0, index) + replaceTerm + text.substring(index + searchTerm.length);
+        editor.focus();
+        editor.setSelectionRange(index, index + replaceTerm.length);
+        status.textContent = 'Replaced';
+        if(currentNoteId) saveCurrentNote(true);
+      } else {
+        status.textContent = 'Not found';
+      }
+    }
+
+    function replaceAll() {
+      const searchTerm = findInput.value.trim();
+      const replaceTerm = replaceInput.value;
+      
+      if (!searchTerm) return;
+      
+      const text = editor.value;
+      const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      const newText = text.replace(regex, replaceTerm);
+      
+      if (newText !== text) {
+        editor.value = newText;
+        status.textContent = `Replaced all occurrences`;
+        if(currentNoteId) saveCurrentNote(true);
+      } else {
+        status.textContent = 'No occurrences found';
+      }
+    }
+
+    // debounce util
+    function debounce(fn, delay){ 
+      let t; 
+      return (...args)=>{ 
+        clearTimeout(t); 
+        t=setTimeout(()=>fn(...args), delay); 
+      } 
+    }
+
+    // Initialize app on load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load saved theme
+      const savedTheme = localStorage.getItem('garden_notepad_theme');
+      if (savedTheme) {
+        setTheme(savedTheme);
+      }
+      
+      // Initialize app
+      initApp();
+    });
+
+    // Save before unload
+    window.addEventListener('beforeunload', () => { 
+      if(currentNoteId) saveCurrentNote();
+    });
+
+  </script>
+</body>
+</html>
