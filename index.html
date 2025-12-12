@@ -120,23 +120,14 @@
       background: var(--paper-bg);
       box-shadow: 0 5px 25px rgba(0,0,0,0.05);
       border-radius: 8px;
-      overflow: hidden; /* Contains stickers */
+      overflow: hidden; 
     }
-
-    /* 
-       LAYERING SYSTEM:
-       1. Paper Background (Lines/Grid) - Absolute Bottom
-       2. Back Stickers - Z-Index 1
-       3. Text Editor - Z-Index 5 (Transparent BG)
-       4. Front Stickers - Z-Index 10
-    */
 
     .paper-pattern {
       position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      /* Default lines */
       background-image: repeating-linear-gradient(transparent, transparent 31px, var(--paper-line) 31px, var(--paper-line) 32px);
       background-size: 100% 32px;
-      margin-top: 20px; /* Offset for padding */
+      margin-top: 20px;
     }
 
     .sticker-layer {
@@ -152,12 +143,18 @@
       font-size: 16px; line-height: 2;
       font-family: var(--font-main);
       color: var(--text-color);
-      background: transparent; /* Crucial for back stickers */
+      background: transparent;
       overflow-y: auto;
       z-index: 5;
     }
     
-    /* Styling for rich text inside editor */
+    /* Mode "Atur Stiker" - Editor becomes transparent to clicks */
+    .paper-container.arrange-mode .rich-editor {
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.8; /* Visual feedback */
+    }
+    
     .rich-editor img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .rich-editor blockquote { 
       border-left: 4px solid var(--green-3); margin: 10px 0; padding-left: 10px; color: #666; font-style: italic; background: rgba(0,0,0,0.02);
@@ -180,7 +177,6 @@
     }
     .sticker.selected .sticker-controls { display: block; }
     
-    /* Control Handles */
     .ctrl-btn {
       position: absolute; width: 28px; height: 28px; background: white; border: 1px solid #ddd;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -205,16 +201,18 @@
     }
     .floating-menu-btn:active { transform: scale(0.9); }
 
-    /* BASIC FORMATTING BAR (Visible) */
     .mini-toolbar {
       position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
       background: rgba(255,255,255,0.95); padding: 8px 20px; border-radius: 50px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.1); backdrop-filter: blur(5px);
-      display: flex; gap: 20px; z-index: 100;
+      display: flex; gap: 20px; z-index: 100; align-items: center;
     }
     .mini-btn { border: none; background: none; font-size: 18px; color: #555; cursor: pointer; padding: 5px; }
     .mini-btn:hover { color: var(--green-3); }
-    .mini-btn.active { color: var(--green-3); }
+    .mini-btn.active { color: var(--green-3); background: #eef9ee; border-radius: 50%; }
+
+    /* Separator in toolbar */
+    .mini-sep { width: 1px; height: 20px; background: #ddd; }
 
     /* SLIDE UP PANEL */
     .mega-panel {
@@ -252,23 +250,19 @@
     .tool-item i { font-size: 20px; color: #666; }
     .tool-item span { font-size: 11px; color: #333; }
 
-    /* Font List Style */
     .font-option { padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display:flex; justify-content:space-between; }
     .font-option:hover { background: #f9f9f9; }
     
-    /* Preset Themes */
     .theme-card {
       padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; color: white;
       display: flex; justify-content: space-between; align-items: center;
       box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
-    /* Sticker Grid in Panel */
     .sticker-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; font-size: 28px; }
     .sticker-item { text-align: center; cursor: pointer; padding: 5px; border-radius: 8px; transition: transform 0.1s; }
     .sticker-item:hover { background: #eee; transform: scale(1.1); }
 
-    /* Overlay */
     .overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150;
       opacity: 0; pointer-events: none; transition: opacity 0.3s;
@@ -276,7 +270,7 @@
     .overlay.active { opacity: 1; pointer-events: auto; }
 
     @media(max-width: 600px) {
-      .mini-toolbar { width: 90%; justify-content: space-around; }
+      .mini-toolbar { width: 95%; justify-content: space-between; padding: 8px 15px; }
       .sticker-grid { grid-template-columns: repeat(5, 1fr); }
     }
   </style>
@@ -298,7 +292,7 @@
   </div>
   
   <div class="footer">
-    <div>Garden Notepad v3</div>
+    <div>Garden Notepad Fixed v3.1</div>
     <div id="status">Ready</div>
   </div>
 </div>
@@ -316,7 +310,7 @@
       <!-- Background Pattern -->
       <div class="paper-pattern" id="paperPattern"></div>
       
-      <!-- Layer 1: Stickers BEHIND text (estetika background) -->
+      <!-- Layer 1: Stickers BEHIND text -->
       <div class="sticker-layer back" id="stickerLayerBack"></div>
       
       <!-- Layer 2: Text Editor -->
@@ -329,6 +323,10 @@
 
   <!-- Mini Toolbar (Quick Actions) -->
   <div class="mini-toolbar">
+    <!-- Tombol Mode: Menulis vs Mengatur Stiker -->
+    <button class="mini-btn active" id="modeBtn" onclick="toggleEditMode()" title="Mode: Menulis (Klik untuk Atur Stiker)"><i class="fas fa-pen"></i></button>
+    <div class="mini-sep"></div>
+    
     <button class="mini-btn" onclick="execCmd('bold')" title="Bold"><i class="fas fa-bold"></i></button>
     <button class="mini-btn" onclick="execCmd('italic')" title="Italic"><i class="fas fa-italic"></i></button>
     <button class="mini-btn" onclick="execCmd('underline')" title="Underline"><i class="fas fa-underline"></i></button>
@@ -361,9 +359,7 @@
     <button class="tab-btn" data-tab="tools">Tools</button>
   </div>
 
-  <div class="panel-content" id="panelContent">
-    <!-- Dynamic Content Loaded via JS -->
-  </div>
+  <div class="panel-content" id="panelContent"></div>
 </div>
 
 <script>
@@ -373,6 +369,7 @@
   let currentNote = null;
   let isNewNote = false;
   let selectedSticker = null;
+  let isArrangeMode = false; // Mode toggle untuk akses stiker belakang
 
   // --- DOM ELEMENTS ---
   const $ = id => document.getElementById(id);
@@ -395,7 +392,6 @@
   });
 
   function setupListeners() {
-    // Navigation
     $('backBtn').addEventListener('click', closeEditor);
     
     // Auto-save logic
@@ -419,31 +415,61 @@
       });
     });
 
-    // Deselect stickers on BG click (if clicking editor empty space)
+    // Handle klik pada editor untuk deselect stiker
     richEditor.addEventListener('mousedown', (e) => {
       if(e.target === richEditor) deselectSticker();
     });
+
+    // Handle klik pada background container (untuk arrange mode)
+    paperContainer.addEventListener('mousedown', (e) => {
+      if(e.target === paperContainer) deselectSticker();
+    });
+  }
+
+  // --- EDIT MODE TOGGLE ---
+  function toggleEditMode() {
+    isArrangeMode = !isArrangeMode;
+    const btn = $('modeBtn');
     
-    // Click pass-through for back stickers is handled by sticker interaction
+    if(isArrangeMode) {
+      // Masuk ke Mode Atur Stiker
+      paperContainer.classList.add('arrange-mode');
+      richEditor.contentEditable = false;
+      btn.innerHTML = '<i class="fas fa-hand-pointer"></i>';
+      btn.classList.remove('active'); // Visual indikasi
+      // Tampilkan toast
+      showToast("Mode Atur: Geser stiker belakang");
+    } else {
+      // Masuk ke Mode Tulis
+      paperContainer.classList.remove('arrange-mode');
+      richEditor.contentEditable = true;
+      btn.innerHTML = '<i class="fas fa-pen"></i>';
+      btn.classList.add('active');
+      showToast("Mode Tulis");
+    }
+  }
+
+  function showToast(msg) {
+    const t = $('saveIndicator');
+    t.innerText = msg;
+    t.style.opacity = 1;
+    setTimeout(() => t.innerText = '', 2000);
   }
 
   // --- NOTE CRUD ---
   function renderNotesList() {
     notesListEl.innerHTML = '';
     
-    // Add Button
     const addBtn = document.createElement('div');
     addBtn.className = 'note-card add-btn-card';
     addBtn.innerHTML = '<i class="fas fa-plus-circle" style="font-size:32px;margin-bottom:10px;"></i><span>Buat Catatan Baru</span>';
     addBtn.onclick = createNewNote;
     notesListEl.appendChild(addBtn);
 
-    // Note Items
     notes.forEach(note => {
       const card = document.createElement('div');
       card.className = 'note-card';
       
-      // Get preview text from HTML content (strip tags)
       const div = document.createElement('div');
       div.innerHTML = note.content;
       const textPreview = div.textContent.substring(0, 100) || 'Tidak ada teks...';
@@ -478,7 +504,6 @@
       updatedAt: Date.now()
     };
     
-    // Reset Editor UI
     noteTitle.value = '';
     richEditor.innerHTML = '';
     stickerLayerBack.innerHTML = '';
@@ -486,7 +511,10 @@
     setTheme('default');
     setPaper('lines');
     
-    // Show Editor
+    // Reset mode to writing
+    isArrangeMode = true; 
+    toggleEditMode(); // Trigger to false (Writing mode)
+
     editorView.classList.add('active');
   }
 
@@ -495,18 +523,19 @@
     currentNote = notes.find(n => n.id === id);
     if(!currentNote) return;
 
-    // Load Data
     noteTitle.value = currentNote.title;
     richEditor.innerHTML = currentNote.content;
     
-    // Load Theme & Paper
     setTheme(currentNote.theme || 'default');
     setPaper(currentNote.paperType || 'lines');
 
-    // Load Stickers
     stickerLayerBack.innerHTML = '';
     stickerLayerFront.innerHTML = '';
     (currentNote.stickers || []).forEach(s => renderSticker(s));
+
+    // Reset mode
+    isArrangeMode = true; 
+    toggleEditMode();
 
     editorView.classList.add('active');
   }
@@ -514,15 +543,13 @@
   function autoSave() {
     const isEmpty = !noteTitle.value.trim() && !richEditor.textContent.trim() && document.querySelectorAll('.sticker').length === 0;
     
-    if (isEmpty && isNewNote) return; // Jangan simpan jika baru dan kosong
+    if (isEmpty && isNewNote) return;
 
-    // Update object
     currentNote.title = noteTitle.value;
     currentNote.content = richEditor.innerHTML;
     currentNote.updatedAt = Date.now();
     currentNote.stickers = getStickersData();
     
-    // Update Array
     const idx = notes.findIndex(n => n.id === currentNote.id);
     if (idx > -1) {
       notes[idx] = currentNote;
@@ -537,19 +564,17 @@
   }
 
   function closeEditor() {
-    // Cek jika kosong saat keluar
     const isEmpty = !noteTitle.value.trim() && !richEditor.textContent.trim() && document.querySelectorAll('.sticker').length === 0;
     
     if(isEmpty) {
-      // Hapus dari array jika ada (bersihkan sampah)
       notes = notes.filter(n => n.id !== currentNote.id);
       localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
     } else {
-      autoSave(); // Force save terakhir
+      autoSave();
     }
 
     editorView.classList.remove('active');
-    renderNotesList(); // Refresh list otomatis
+    renderNotesList();
   }
 
   function deleteNote(id, e) {
@@ -568,7 +593,7 @@
       emoji: emoji,
       x: 50, y: 50,
       rot: 0, scale: 1,
-      layer: 'front' // default
+      layer: 'front'
     };
     renderSticker(data);
     autoSave();
@@ -583,13 +608,11 @@
     el.style.top = data.y + 'px';
     el.style.transform = `rotate(${data.rot}deg) scale(${data.scale})`;
     
-    // Dataset for logic
     el.dataset.emoji = data.emoji;
     el.dataset.rot = data.rot;
     el.dataset.scale = data.scale;
     el.dataset.layer = data.layer;
 
-    // Content & Controls
     el.innerHTML = `
       <div class="sticker-content">${data.emoji}</div>
       <div class="sticker-controls">
@@ -602,15 +625,12 @@
       </div>
     `;
 
-    // Append to correct layer
     const target = data.layer === 'back' ? stickerLayerBack : stickerLayerFront;
     target.appendChild(el);
-
     setupStickerEvents(el);
   }
 
   function setupStickerEvents(el) {
-    // Interaction
     el.addEventListener('mousedown', (e) => {
       if(e.target.classList.contains('ctrl-btn')) return;
       selectSticker(el);
@@ -625,36 +645,31 @@
 
     const controls = el.querySelector('.sticker-controls');
 
-    // DELETE
     controls.querySelector('.ctrl-del').addEventListener('click', (e) => {
       e.stopPropagation(); el.remove(); autoSave();
     });
 
-    // LAYER TOGGLE (Front/Back)
     controls.querySelector('.ctrl-layer').addEventListener('click', (e) => {
       e.stopPropagation();
       const isFront = el.dataset.layer === 'front';
-      
-      // Toggle
       el.dataset.layer = isFront ? 'back' : 'front';
       
-      // Pindahkan DOM
       if(isFront) {
-        stickerLayerBack.appendChild(el); // Ke belakang
-        e.target.style.color = '#ccc'; // Visual indicator
+        stickerLayerBack.appendChild(el); 
+        e.target.style.color = '#ccc';
+        showToast("Stiker dikirim ke Belakang");
       } else {
-        stickerLayerFront.appendChild(el); // Ke depan
+        stickerLayerFront.appendChild(el);
         e.target.style.color = '#4D89FF';
+        showToast("Stiker dikirim ke Depan");
       }
       autoSave();
     });
 
-    // ROTATE
     const rotBtn = controls.querySelector('.ctrl-rot');
     rotBtn.addEventListener('mousedown', e => initRotate(e, el));
     rotBtn.addEventListener('touchstart', e => initRotate(e.touches[0], el));
 
-    // RESIZE
     const resBtn = controls.querySelector('.ctrl-resize');
     resBtn.addEventListener('mousedown', e => initResize(e, el));
     resBtn.addEventListener('touchstart', e => initResize(e.touches[0], el));
@@ -673,14 +688,9 @@
     }
   }
 
-  // --- DRAG / ROTATE / RESIZE LOGIC ---
   function initDrag(e, el) {
     const startX = e.clientX;
     const startY = e.clientY;
-    const rect = el.getBoundingClientRect();
-    const parentRect = paperContainer.getBoundingClientRect();
-    
-    // Hitung posisi relatif terhadap parent
     const startLeft = el.offsetLeft;
     const startTop = el.offsetTop;
 
@@ -748,7 +758,6 @@
     const onMove = (evt) => {
       const cy = evt.clientY || evt.touches?.[0].clientY;
       const dy = cy - startY;
-      // Scale sensitivity
       const newScale = Math.max(0.5, Math.min(3, startScale + (dy * 0.01)));
       el.dataset.scale = newScale;
       el.style.transform = `rotate(${el.dataset.rot}deg) scale(${newScale})`;
@@ -787,14 +796,15 @@
   function openPanel(tab) {
     megaPanel.classList.add('open');
     overlay.classList.add('active');
-    
-    // Simulate Click on Tab
-    document.querySelector(`.tab-btn[data-tab="${tab}"]`).click();
+    const tabBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+    if(tabBtn) tabBtn.click();
   }
 
   function closePanel() {
     megaPanel.classList.remove('open');
     overlay.classList.remove('active');
+    // Kembalikan fokus ke editor jika memungkinkan
+    if(!isArrangeMode) richEditor.focus();
   }
 
   function renderTabContent(tab) {
@@ -813,7 +823,6 @@
       `;
     }
     else if(tab === 'style') {
-      // Font List
       const fonts = ['Quicksand', 'Poppins', 'Nunito', 'Baloo 2', 'Comic Neue', 'Inter', 'Caveat', 'Kalam', 'Gloria Hallelujah', 'Reenie Beanie'];
       let fontHtml = `<div style="margin-bottom:10px;font-weight:bold;">Font Family</div><div style="height:120px;overflow-y:auto;border:1px solid #eee;border-radius:8px;margin-bottom:15px;">`;
       fonts.forEach(f => {
@@ -821,7 +830,6 @@
       });
       fontHtml += '</div>';
 
-      // Sizes
       const sizes = `
         <div style="margin-bottom:5px;font-weight:bold;">Size & Decor</div>
         <div class="tool-grid">
@@ -894,14 +902,15 @@
 
   // --- EDITOR UTILS ---
   function execCmd(cmd, val=null) {
-    document.execCommand(cmd, false, val);
+    // FIX: Kembalikan fokus ke editor sebelum eksekusi agar berfungsi
     richEditor.focus();
+    document.execCommand(cmd, false, val);
     autoSave();
-    // Close panel if simple command
     if(cmd !== 'insertImage' && cmd !== 'fontSize' && cmd !== 'fontName') closePanel();
   }
 
   function setFont(name) {
+    richEditor.focus();
     document.execCommand('fontName', false, name);
     closePanel();
   }
@@ -910,27 +919,34 @@
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.style.display = 'none';
+    document.body.appendChild(input); // Attach to body for reliable execution
+
     input.onchange = e => {
       const file = e.target.files[0];
       if(file) {
         const reader = new FileReader();
         reader.onload = r => {
+          richEditor.focus();
           document.execCommand('insertImage', false, r.target.result);
           closePanel();
         };
         reader.readAsDataURL(file);
       }
+      document.body.removeChild(input);
     };
     input.click();
   }
 
   function insertCheckbox() {
+    richEditor.focus();
     const html = '<input type="checkbox" style="margin-right:8px; pointer-events:none;">&nbsp;';
     document.execCommand('insertHTML', false, html);
     closePanel();
   }
 
   function insertQuote() {
+    richEditor.focus();
     const html = '<blockquote style="border-left:4px solid #8ecf9a; margin:10px 0; padding-left:10px; font-style:italic; color:#666;">Kutipan...</blockquote><br>';
     document.execCommand('insertHTML', false, html);
     closePanel();
@@ -939,31 +955,31 @@
   function applyTheme(id) {
     currentNote.theme = id;
     const t = {
-      'default': {font:'Quicksand', col:'#333', paper:'#fffaf0'},
-      'sakura': {font:'Caveat', col:'#c56582', paper:'#fff0f5'},
-      'sky': {font:'Nunito', col:'#333', paper:'#f0f8ff'},
-      'sunshine': {font:'Baloo 2', col:'#5d4037', paper:'#fffbea'}
+      'default': {font:'Quicksand', col:'#333', bg:'#fffaf0'},
+      'sakura': {font:'Caveat', col:'#c56582', bg:'#fff0f5'},
+      'sky': {font:'Nunito', col:'#333', bg:'#f0f8ff'},
+      'sunshine': {font:'Baloo 2', col:'#5d4037', bg:'#fffbea'}
     }[id];
 
+    // FIX: Use correct keys (bg instead of paper)
     richEditor.style.fontFamily = t.font;
     richEditor.style.color = t.col;
-    paperContainer.style.background = t.paper;
+    paperContainer.style.background = t.bg;
     autoSave();
     closePanel();
   }
   
   function setTheme(id) {
-    // Helper to just set style without saving (for loading)
     const t = {
-      'default': {font:'Quicksand', col:'#333', paper:'#fffaf0'},
-      'sakura': {font:'Caveat', col:'#c56582', paper:'#fff0f5'},
-      'sky': {font:'Nunito', col:'#333', paper:'#f0f8ff'},
-      'sunshine': {font:'Baloo 2', col:'#5d4037', paper:'#fffbea'}
-    }[id] || {font:'Quicksand', col:'#333', paper:'#fffaf0'};
+      'default': {font:'Quicksand', col:'#333', bg:'#fffaf0'},
+      'sakura': {font:'Caveat', col:'#c56582', bg:'#fff0f5'},
+      'sky': {font:'Nunito', col:'#333', bg:'#f0f8ff'},
+      'sunshine': {font:'Baloo 2', col:'#5d4037', bg:'#fffbea'}
+    }[id] || {font:'Quicksand', col:'#333', bg:'#fffaf0'};
 
     richEditor.style.fontFamily = t.font;
     richEditor.style.color = t.col;
-    paperContainer.style.background = t.paper;
+    paperContainer.style.background = t.bg;
   }
 
   function setPaper(type) {
@@ -983,10 +999,10 @@
   }
 
   function toggleAlign() {
+    richEditor.focus();
     const aligns = ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'];
     const icons = ['fa-align-left', 'fa-align-center', 'fa-align-right', 'fa-align-justify'];
     
-    // Simple toggle logic
     let curr = parseInt($('alignBtn').dataset.idx || 0);
     let next = (curr + 1) % 4;
     
