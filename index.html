@@ -6,7 +6,1796 @@
   <title>Garden Notepad — Zeli's Garden</title>
   
   <!-- Fonts Google -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&fami<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Garden Notepad — Zeli's Garden</title>
+  
+  <!-- Fonts Google -->
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&family=Poppins:wght@300;400&family=Nunito:wght@400;700&family=Baloo+2&family=Comic+Neue&family=Inter:wght@300;400&family=Caveat:wght@400;700&family=Kalam&family=Gloria+Hallelujah&family=Reenie+Beanie&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Picmo Emoji Picker CDN -->
+  <script src="https://unpkg.com/picmo@latest/dist/umd/index.js"></script>
+  <!-- OpenMoji API -->
+  <script src="https://cdn.jsdelivr.net/npm/openmoji@14.0.0/dist/openmoji.min.js"></script>
+  <!-- html2canvas for screenshot functionality -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --sky-1: #e6f9ff;
+      --sky-2: #cfeefd;
+      --green-1: #f0fbf2;
+      --green-2: #dff9e6;
+      --green-3: #8ecf9a;
+      --accent: #ffd6e0;
+      --card: rgba(255,255,255,0.95);
+      --muted: #6b6b6b;
+      
+      /* Editor Vars */
+      --paper-bg: #fffaf0;
+      --paper-line: rgba(0,0,0,0.05);
+      --font-main: 'Quicksand', sans-serif;
+      --text-color: #333;
+    }
+
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    html,body{height:100%; margin:0; font-family:'Quicksand',sans-serif; overflow: hidden; touch-action: pan-y;}
+
+    body{
+      background: linear-gradient(180deg,var(--sky-1),var(--sky-2) 40%,var(--green-1) 60%,var(--green-2));
+      display:flex; flex-direction: column;
+    }
+
+    /* --- MODE SELECTION --- */
+    .mode-selection {
+      position: fixed; inset: 0; background: rgba(255,255,255,0.95);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .mode-selection.hidden { display: none; }
+    .mode-title { font-size: 24px; margin-bottom: 30px; color: #333; }
+    .mode-options { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .mode-option {
+      width: 150px; height: 150px; border-radius: 20px;
+      background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .mode-option:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .mode-option i { font-size: 48px; margin-bottom: 10px; }
+    .mode-option span { font-size: 16px; font-weight: 600; }
+
+    /* --- LIST VIEW --- */
+    .app {
+      width:100%; height:100%; position:relative; 
+      background: rgba(255,255,255,0.5); backdrop-filter: blur(5px);
+      display: flex; flex-direction: column;
+    }
+
+    .header{
+      flex: 0 0 80px; padding:0 20px; display:flex; align-items:center; gap:15px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.0));
+    }
+    .logo{
+      width:45px; height:45px; border-radius:12px; 
+      background: linear-gradient(135deg, var(--green-3), var(--green-2));
+      display:flex; align-items:center; justify-content:center; 
+      font-size:22px; color:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
+    .title h1{ margin:0; font-size:18px; color:#333; }
+    .title p{ margin:0; color:var(--muted); font-size:12px; }
+
+    .notes-list-view {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
+      padding-bottom: 80px;
+    }
+    
+    @media(min-width: 768px) {
+      .notes-list-view { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+    }
+
+    .note-card {
+      background: var(--card); border-radius: 16px; padding: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03); cursor: pointer;
+      display: flex; flex-direction: column; height: 180px;
+      transition: all 0.2s; border: 1px solid rgba(255,255,255,0.5);
+      position: relative;
+    }
+    .note-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .note-card h3 { margin: 0 0 8px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-card .preview { font-size: 12px; color: #666; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; line-height: 1.4; }
+    .note-card .meta { font-size: 10px; color: #999; margin-top: 10px; display: flex; justify-content: space-between; }
+    
+    .add-btn-card {
+      border: 2px dashed var(--green-3); background: rgba(255,255,255,0.4);
+      color: var(--green-3); align-items: center; justify-content: center;
+      text-align: center; font-size: 14px;
+    }
+    .delete-card-btn {
+      position: absolute; top: 8px; right: 8px; border: none; background: #fff;
+      width: 24px; height: 24px; border-radius: 50%; color: #ff8888; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 5;
+    }
+
+    /* --- EDITOR VIEW --- */
+    .editor-view {
+      position: fixed; inset: 0; background: #f4f9f4;
+      display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 50;
+    }
+    .editor-view.active { transform: translateX(0); }
+
+    .editor-topbar {
+      flex: 0 0 60px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
+      background: white; border-bottom: 1px solid #eee; z-index: 20;
+    }
+    .back-btn { border: none; background: transparent; font-size: 18px; padding: 10px; cursor: pointer; color: #555; }
+    .note-title-input {
+      flex: 1; border: none; font-size: 18px; font-weight: 600; outline: none;
+      font-family: 'Quicksand', sans-serif; color: #333; background: transparent;
+    }
+
+    /* --- TOP TOOLBAR --- */
+    .top-toolbar-container {
+      position: absolute; top: 60px; left: 0; width: 100%;
+      background: rgba(255,255,255,0.95);
+      border-bottom: 1px solid #eee;
+      padding: 10px 15px;
+      display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    
+    .scroll-tools {
+      display: flex; align-items: center; gap: 15px; overflow-x: auto;
+      padding-right: 15px; flex: 1; scrollbar-width: none;
+    }
+    .scroll-tools::-webkit-scrollbar { display: none; }
+
+    .tool-btn {
+      flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px;
+      border: none; background: #f4f6f4; color: #555;
+      font-size: 16px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .tool-btn:active { transform: scale(0.9); }
+    .tool-btn.active { background: var(--green-3); color: white; }
+    
+    /* Tombol Mega Menu (Kotak) */
+    .menu-trigger {
+      flex: 0 0 auto; width: 45px; height: 45px; border-radius: 14px;
+      background: #333; color: white; border: none; font-size: 20px;
+      margin-left: 10px; cursor: pointer;
+    }
+
+    /* Workspace & Paper */
+    .editor-workspace {
+      flex: 1; position: relative; overflow-y: auto; overflow-x: hidden;
+      display: flex; justify-content: center; 
+      background: #eef5ee;
+      padding: 20px;
+      /* PENTING: Padding atas agar teks tidak tertutup toolbar */
+      padding-top: 80px; 
+      padding-bottom: 70px; /* Extra space for page navigation */
+    }
+
+    .paper-container {
+      width: 100%; 
+      height: 1760px; /* Fixed height for 55 lines (55 * 32px) */
+      position: relative;
+      background: var(--paper-bg);
+      box-shadow: 0 5px 25px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      /* Desktop Style A4 look */
+      max-width: 800px;
+      overflow: hidden; /* Contains stickers inside paper */
+    }
+
+    .paper-pattern {
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background-image: repeating-linear-gradient(transparent, transparent 31px, var(--paper-line) 31px, var(--paper-line) 32px);
+      background-size: 100% 32px;
+      margin-top: 30px;
+      height: 1760px; /* Fixed height for 55 lines */
+    }
+
+    .sticker-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .sticker-layer.front { z-index: 10; }
+    .sticker-layer.back { z-index: 1; }
+
+    .rich-editor {
+      position: relative; width: 100%; 
+      height: 1760px; /* Fixed height for 55 lines */
+      border: none; outline: none; padding: 30px 40px;
+      font-size: 16px; line-height: 2;
+      font-family: var(--font-main);
+      color: var(--text-color);
+      background: transparent;
+      z-index: 5;
+      overflow: hidden; /* Prevent content overflow */
+    }
+    
+    .paper-container.arrange-mode .rich-editor { pointer-events: none; opacity: 0.6; }
+
+    .rich-editor img { 
+      max-width: 300px; /* Limit image width */
+      max-height: 300px; /* Limit image height */
+      display: block; /* Make images block elements */
+      margin: 10px 0; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+      float: left; /* Float images to allow text wrapping */
+      margin-right: 10px; /* Add space after image */
+      margin-bottom: 10px; /* Add space below image */
+      clear: both; /* Clear float after multiple images */
+    }
+    .rich-editor blockquote { 
+      border-left: 4px solid var(--green-3); margin: 10px 0; padding-left: 10px; 
+      color: #666; font-style: italic; background: rgba(0,0,0,0.02); 
+    }
+    .highlight-pastel { background: #ffd6e0; border-radius: 4px; padding: 0 4px; }
+
+    /* --- STICKERS --- */
+    .sticker {
+      position: absolute; display: inline-flex; align-items: center; justify-content: center;
+      cursor: grab; user-select: none; touch-action: none; pointer-events: auto;
+      transform-origin: center;
+    }
+    .sticker:active { cursor: grabbing; }
+    .sticker-content { font-size: 40px; line-height: 1; pointer-events: none; }
+    
+    /* Control Handles (Simplified to 4 buttons) */
+    .sticker-controls {
+      position: absolute; inset: -15px; border: 2px dashed #8ecf9a; border-radius: 8px;
+      display: none; pointer-events: none;
+    }
+    .sticker.selected .sticker-controls { display: block; }
+    
+    .ctrl-btn {
+      position: absolute; width: 32px; height: 32px; background: white; border: 1px solid #ddd;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; pointer-events: auto; cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
+    }
+    .ctrl-del { 
+      top: -16px; 
+      right: -16px; 
+      background: #ff6b6b; 
+      color: white;
+      border-color: #ff6b6b;
+    }
+    .ctrl-layer { 
+      bottom: -16px; 
+      left: -16px; 
+      background: #4D89FF; 
+      color: white;
+      border-color: #4D89FF;
+    }
+    
+    /* Rotation Handle (Simplified) */
+    .ctrl-rotate {
+      position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+      width: 24px; height: 24px; background: white; border: 1px solid #ddd;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #555; pointer-events: auto; cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
+    }
+    
+    /* Resize Handle (Simplified - single handle for corner) */
+    .ctrl-resize {
+      position: absolute; bottom: -8px; right: -8px;
+      width: 16px; height: 16px; background: white; border: 1px solid #ddd;
+      border-radius: 50%; pointer-events: auto; cursor: se-resize;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
+    }
+
+    /* --- MEGA PANEL --- */
+    .mega-panel {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 60vh;
+      background: white; border-radius: 25px 25px 0 0;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+      z-index: 200; transform: translateY(110%);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex; flex-direction: column;
+    }
+    .mega-panel.open { transform: translateY(0); }
+
+    .panel-header {
+      padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-tabs {
+      display: flex; gap: 5px; overflow-x: auto; padding: 10px 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .tab-btn {
+      padding: 8px 14px; border-radius: 20px; border: 1px solid #eee; background: white;
+      font-size: 12px; cursor: pointer; white-space: nowrap; color: #555;
+    }
+    .tab-btn.active { background: var(--green-2); border-color: var(--green-3); color: #2d5a35; font-weight: bold; }
+    
+    .panel-content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
+    
+    /* Grid Tools inside Panel */
+    .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+    .tool-item {
+      display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+      padding: 15px 5px; background: #f8f9fa; border-radius: 12px; cursor: pointer;
+    }
+    .tool-item i { font-size: 20px; color: #666; }
+    .tool-item span { font-size: 11px; }
+
+    /* Theme Cards */
+    .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .theme-card {
+      padding: 15px; border-radius: 10px; color: white; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .overlay.active { opacity: 1; pointer-events: auto; }
+    
+    /* PICMO Container Style */
+    #emojiContainer {
+      width: 100%; height: 100%;
+    }
+    /* Fix Picmo sizing */
+    .picmo__picker { width: 100% !important; border: none !important; --emoji-size: 2rem; }
+    
+    /* Sticker Categories */
+    .sticker-categories {
+      display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    .sticker-category {
+      padding: 8px 12px; border-radius: 20px; background: #f0f0f0; font-size: 12px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .sticker-category.active { background: var(--green-3); color: white; }
+    
+    .sticker-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+    }
+    .sticker-item {
+      display: flex; align-items: center; justify-content: center;
+      height: 60px; background: #f8f9fa; border-radius: 8px;
+      font-size: 30px; cursor: pointer;
+    }
+    .sticker-item:hover { background: #e9ecef; }
+
+    /* Fullscreen button for list view */
+    .list-fullscreen-btn {
+      position: absolute; bottom: 20px; right: 20px;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: var(--green-3); color: white;
+      border: none; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    /* Page navigation for multi-page notes */
+    .page-nav {
+      position: fixed; bottom: 20px; right: 20px;
+      display: flex; gap: 10px; z-index: 15;
+      background: rgba(255,255,255,0.9);
+      padding: 8px 12px;
+      border-radius: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .page-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: white; border: 1px solid #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer;
+    }
+    .page-btn.active { background: var(--green-3); color: white; border-color: var(--green-3); }
+    .page-btn.add-page { background: var(--green-3); color: white; border-color: var(--green-3); }
+
+    /* Screenshot button */
+    .screenshot-btn {
+      position: absolute; top: 10px; right: 10px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--green-3); color: white;
+      border: none; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    /* Mobile optimizations */
+    @media(max-width: 767px) {
+      .top-toolbar-container {
+        position: fixed; bottom: 0; top: auto;
+        border-radius: 20px 20px 0 0;
+        padding-bottom: 20px;
+      }
+      .editor-workspace { padding-bottom: 120px; }
+      .tool-btn { width: 45px; height: 45px; font-size: 18px; }
+      .menu-trigger { width: 50px; height: 50px; font-size: 22px; }
+      .page-nav {
+        bottom: 80px; /* Adjust for mobile toolbar */
+      }
+    }
+
+    @media(min-width: 600px) {
+      .mega-panel { width: 400px; left: 50%; transform: translate(-50%, 110%); height: 500px; border-radius: 15px; bottom: 20px; }
+      .mega-panel.open { transform: translate(-50%, 0); }
+      .top-toolbar-container { width: 600px; left: 50%; transform: translateX(-50%); border-radius: 0 0 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Mode Selection Screen -->
+<div class="mode-selection" id="modeSelection">
+  <h2 class="mode-title">Pilih Mode Penggunaan</h2>
+  <div class="mode-options">
+    <div class="mode-option" onclick="selectMode('desktop')">
+      <i class="fas fa-desktop"></i>
+      <span>Desktop</span>
+    </div>
+    <div class="mode-option" onclick="selectMode('mobile')">
+      <i class="fas fa-mobile-alt"></i>
+      <span>Mobile</span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">🌿</div>
+    <div class="title">
+      <h1>Zeli's Garden v4</h1>
+      <p>Estetika & Emosi</p>
+    </div>
+  </div>
+
+  <div class="notes-list-view" id="notesList"></div>
+  
+  <!-- Fullscreen button for list view -->
+  <button class="list-fullscreen-btn" id="listFullscreenBtn" title="Fullscreen">
+    <i class="fas fa-expand"></i>
+  </button>
+</div>
+
+<div class="editor-view" id="editorView">
+  <div class="editor-topbar">
+    <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
+    <input type="text" class="note-title-input" id="noteTitle" placeholder="Judul..." />
+    <div id="saveIndicator" style="font-size:11px; color:var(--green-3); font-weight:600; white-space:nowrap;"></div>
+    <button class="tool-btn" id="fullscreenBtn" title="Fullscreen"><i class="fas fa-expand"></i></button>
+    <button class="tool-btn" id="exportBtn" title="Export"><i class="fas fa-download"></i></button>
+    <button class="tool-btn" id="importBtn" title="Import"><i class="fas fa-upload"></i></button>
+  </div>
+
+  <!-- Top Toolbar -->
+  <div class="top-toolbar-container">
+    <div class="scroll-tools">
+      <!-- Add Page Button -->
+      <button class="tool-btn" id="addPageBtn" title="Add Page"><i class="fas fa-plus"></i></button>
+      <div style="width:1px; height:20px; background:#ddd; margin:0 5px;"></div>
+      
+      <button class="tool-btn active" id="modeBtn" onclick="toggleEditMode()"><i class="fas fa-pen"></i></button>
+      <div style="width:1px; height:20px; background:#ddd; margin:0 5px;"></div>
+      
+      <!-- Common tools outside mega menu -->
+      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('undo')"><i class="fas fa-undo"></i></button>
+      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('redo')"><i class="fas fa-redo"></i></button>
+      <button class="tool-btn" onmousedown="evtPd(event)" onclick="insertCheckbox()"><i class="far fa-check-square"></i></button>
+      <button class="tool-btn" onmousedown="evtPd(event)" onclick="insertImagePrompt()"><i class="far fa-image"></i></button>
+      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('bold')"><i class="fas fa-bold"></i></button>
+      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('italic')"><i class="fas fa-italic"></i></button>
+      <button class="tool-btn" onmousedown="evtPd(event)" id="alignBtn"><i class="fas fa-align-left"></i></button>
+    </div>
+    <button class="menu-trigger" onclick="openPanel('stickers')"><i class="fas fa-bars"></i></button>
+  </div>
+
+  <div class="editor-workspace">
+    <div class="paper-container" id="paperContainer">
+      <!-- Screenshot button -->
+      <button class="screenshot-btn" id="screenshotBtn" title="Screenshot">
+        <i class="fas fa-camera"></i>
+      </button>
+      
+      <div class="paper-pattern" id="paperPattern"></div>
+      <div class="sticker-layer back" id="stickerLayerBack"></div>
+      <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="false" placeholder="Tulis sesuatu yang indah..."></div>
+      <div class="sticker-layer front" id="stickerLayerFront"></div>
+    </div>
+    
+    <!-- Page navigation -->
+    <div class="page-nav" id="pageNav" style="display:none;">
+      <button class="page-btn active" data-page="1">1</button>
+      <button class="page-btn add-page" title="Add Page">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="mega-panel" id="megaPanel">
+  <div class="panel-header">
+    <h3>Tools & Decor</h3>
+    <button id="closePanel" style="border:none;background:none;font-size:24px;">&times;</button>
+  </div>
+  
+  <div class="panel-tabs">
+    <button class="tab-btn active" data-tab="stickers" onmousedown="evtPd(event)">Stickers</button>
+    <button class="tab-btn" data-tab="stickers2" onmousedown="evtPd(event)">Stickers 2</button>
+    <button class="tab-btn" data-tab="style" onmousedown="evtPd(event)">Style</button>
+    <button class="tab-btn" data-tab="format" onmousedown="evtPd(event)">Format</button>
+    <button class="tab-btn" data-tab="paper" onmousedown="evtPd(event)">Paper</button>
+    <button class="tab-btn" data-tab="meta" onmousedown="evtPd(event)">Meta</button>
+  </div>
+
+  <div class="panel-content" id="panelContent"></div>
+</div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="importFileInput" style="display:none" accept=".json">
+
+<script>
+  // --- HELPERS ---
+  const $ = id => document.getElementById(id);
+  const evtPd = e => e.preventDefault();
+  
+  // --- STATE ---
+  const NOTES_KEY = 'zeli_garden_v4';
+  const MODE_KEY = 'zeli_garden_mode';
+  let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+  let currentNote = null;
+  let isNewNote = false;
+  let isArrangeMode = false;
+  let selectedSticker = null;
+  let savedRange = null; // Cursor memory
+  let emojiPicker = null; // Picmo instance
+  let openmojiData = []; // Store OpenMoji data
+  let isFullscreen = false;
+  let isMobileMode = false;
+  let styleStates = {}; // Track style states
+  let currentPage = 1;
+  let notePages = {}; // Track pages for each note
+  let noteHeight = 1760; // Fixed note height for 55 lines (55 * 32px)
+  let noteWidth = 800; // Fixed note width
+
+  // --- ELEMENTS ---
+  const elements = {
+    list: $('notesList'), editorView: $('editorView'), 
+    editor: $('richEditor'), title: $('noteTitle'),
+    paper: $('paperContainer'), pattern: $('paperPattern'),
+    layerBack: $('stickerLayerBack'), layerFront: $('stickerLayerFront'),
+    panel: $('megaPanel'), panelContent: $('panelContent'), overlay: $('overlay'),
+    fullscreenBtn: $('fullscreenBtn'), exportBtn: $('exportBtn'), 
+    importBtn: $('importBtn'), importFileInput: $('importFileInput'),
+    modeSelection: $('modeSelection'), listFullscreenBtn: $('listFullscreenBtn'),
+    pageNav: $('pageNav'), addPageBtn: $('addPageBtn'),
+    screenshotBtn: $('screenshotBtn')
+  };
+
+  // --- INIT ---
+  window.addEventListener('DOMContentLoaded', () => {
+    // Check if mode is already selected
+    const savedMode = localStorage.getItem(MODE_KEY);
+    if (savedMode) {
+      isMobileMode = savedMode === 'mobile';
+      elements.modeSelection.classList.add('hidden');
+      renderList();
+      initListeners();
+      loadOpenMojiData();
+    } else {
+      // Show mode selection screen
+      elements.modeSelection.classList.remove('hidden');
+    }
+    
+    // Prevent zoom and scroll
+    document.addEventListener('touchmove', function(e) {
+      if (e.scale !== 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
+    
+    // Prevent horizontal scrolling
+    document.body.addEventListener('touchmove', function(e) {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  });
+
+  function selectMode(mode) {
+    isMobileMode = mode === 'mobile';
+    localStorage.setItem(MODE_KEY, mode);
+    elements.modeSelection.classList.add('hidden');
+    
+    // Apply mobile optimizations if needed
+    if (isMobileMode) {
+      document.body.classList.add('mobile-mode');
+    }
+    
+    renderList();
+    initListeners();
+    loadOpenMojiData();
+  }
+
+  function initListeners() {
+    $('backBtn').addEventListener('click', closeEditor);
+    elements.editor.addEventListener('input', debounce(autoSave, 1000));
+    elements.title.addEventListener('input', debounce(autoSave, 1000));
+    
+    // Save Cursor Position Events
+    ['keyup', 'mouseup', 'touchend', 'input', 'blur'].forEach(ev => {
+      elements.editor.addEventListener(ev, saveSelection);
+    });
+
+    $('closePanel').addEventListener('click', closePanel);
+    elements.overlay.addEventListener('click', closePanel);
+    $('alignBtn').addEventListener('click', toggleAlign);
+
+    // Fullscreen buttons
+    elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+    elements.listFullscreenBtn.addEventListener('click', toggleListFullscreen);
+    
+    // Export/Import buttons
+    elements.exportBtn.addEventListener('click', exportNotes);
+    elements.importBtn.addEventListener('click', () => elements.importFileInput.click());
+    elements.importFileInput.addEventListener('change', importNotes);
+
+    // Panel Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        renderPanel(e.target.dataset.tab);
+      });
+    });
+
+    // Deselect Logic
+    elements.paper.addEventListener('click', (e) => {
+      if(e.target === elements.paper || e.target === elements.editor) deselectSticker();
+    });
+    
+    // ESC key to exit fullscreen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        if (elements.editorView.classList.contains('active')) {
+          toggleFullscreen();
+        } else {
+          toggleListFullscreen();
+        }
+      }
+    });
+    
+    // Page navigation
+    elements.pageNav.addEventListener('click', (e) => {
+      if (e.target.classList.contains('page-btn') && !e.target.id) {
+        const page = parseInt(e.target.dataset.page);
+        if (page !== currentPage) {
+          switchToPage(page);
+        }
+      }
+    });
+    
+    // Add page button in toolbar
+    elements.addPageBtn.addEventListener('click', addNewPage);
+    
+    // Add page button in page navigation
+    const pageNavAddBtn = document.querySelector('.page-nav .add-page');
+    if (pageNavAddBtn) {
+      pageNavAddBtn.addEventListener('click', addNewPage);
+    }
+    
+    // Screenshot button
+    elements.screenshotBtn.addEventListener('click', takeScreenshot);
+    
+    // Prevent Enter key from creating new lines beyond 55
+    elements.editor.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        // Check if we're at the last line
+        const lines = elements.editor.innerText.split('\n');
+        if (lines.length >= 55) {
+          e.preventDefault();
+          return false;
+        }
+      }
+    });
+    
+    // Prevent content from exceeding the editor height
+    elements.editor.addEventListener('input', function() {
+      // Check if content exceeds the editor height
+      if (elements.editor.scrollHeight > elements.editor.clientHeight) {
+        // Remove the last character if content exceeds height
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const startOffset = range.startOffset;
+        
+        // Get the text content
+        const text = elements.editor.innerText;
+        
+        // Truncate to fit within the editor
+        const lines = text.split('\n');
+        if (lines.length > 55) {
+          lines.length = 55; // Keep only the first 55 lines
+          elements.editor.innerText = lines.join('\n');
+          
+          // Restore cursor position
+          try {
+            const newRange = document.createRange();
+            const textNode = elements.editor.firstChild;
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+              const offset = Math.min(startOffset, textNode.length);
+              newRange.setStart(textNode, offset);
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            }
+          } catch (e) {
+            // If restoring cursor fails, just place it at the end
+            const range = document.createRange();
+            range.selectNodeContents(elements.editor);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      }
+    });
+  }
+
+  // Load OpenMoji data
+  function loadOpenMojiData() {
+    // Using a subset of OpenMoji for demo
+    fetch('https://cdn.jsdelivr.net/npm/openmoji@14.0.0/data/openmoji.json')
+      .then(response => response.json())
+      .then(data => {
+        // Filter to only include emojis with images
+        openmojiData = data.filter(emoji => emoji.skintone === '' && emoji.hasAppleEmoji === true);
+      })
+      .catch(error => {
+        console.error('Error loading OpenMoji data:', error);
+        // Fallback to a smaller set if main one fails
+        openmojiData = [
+          { emoji: "🌿", tags: ["nature", "plant"] },
+          { emoji: "🌸", tags: ["nature", "flower"] },
+          { emoji: "🌺", tags: ["nature", "flower"] },
+          { emoji: "🌻", tags: ["nature", "flower"] },
+          { emoji: "🌹", tags: ["nature", "flower"] },
+          { emoji: "🦋", tags: ["animal", "insect"] },
+          { emoji: "🐝", tags: ["animal", "insect"] },
+          { emoji: "🐞", tags: ["animal", "insect"] },
+          { emoji: "🐢", tags: ["animal", "reptile"] },
+          { emoji: "🐙", tags: ["animal", "sea"] },
+          { emoji: "🌈", tags: ["nature", "weather"] },
+          { emoji: "☀️", tags: ["nature", "weather"] },
+          { emoji: "🌙", tags: ["nature", "weather"] },
+          { emoji: "⭐", tags: ["nature", "sky"] },
+          { emoji: "☁️", tags: ["nature", "weather"] }
+        ];
+      });
+  }
+
+  // --- CORE FUNCTIONS ---
+  function renderList() {
+    elements.list.innerHTML = '';
+    // Add Button
+    const addCard = document.createElement('div');
+    addCard.className = 'note-card add-btn-card';
+    addCard.innerHTML = '<i class="fas fa-plus" style="font-size:30px; margin-bottom:10px;"></i><br>New Story';
+    addCard.onclick = createNote;
+    elements.list.appendChild(addCard);
+
+    notes.forEach(note => {
+      const card = document.createElement('div');
+      card.className = 'note-card';
+      const prevDiv = document.createElement('div');
+      // Get the first page content for preview
+      const firstPageContent = note.pages && note.pages[1] ? note.pages[1].content : note.content || '';
+      prevDiv.innerHTML = firstPageContent;
+      const preview = prevDiv.textContent.substring(0, 120) || 'Kosong...';
+      
+      card.innerHTML = `
+        <h3>${note.title || 'Tanpa Judul'}</h3>
+        <div class="preview">${preview}</div>
+        <div class="meta">
+          <span>${new Date(note.updatedAt).toLocaleDateString()}</span>
+          <span>${note.mood || '🌿'}</span>
+        </div>
+        <button class="delete-card-btn" onclick="deleteNote('${note.id}', event)"><i class="fas fa-times"></i></button>
+      `;
+      card.onclick = (e) => { if(!e.target.closest('.delete-card-btn')) openNote(note.id); };
+      elements.list.appendChild(card);
+    });
+  }
+
+  function createNote() {
+    isNewNote = true;
+    currentNote = {
+      id: Date.now().toString(), 
+      title: '', 
+      content: '', 
+      stickers: [],
+      theme: 'default', 
+      paper: 'lines', 
+      mood: '🌿', 
+      updatedAt: Date.now(),
+      width: noteWidth, 
+      height: noteHeight,
+      // Initialize with one page
+      pages: {
+        1: {
+          content: '',
+          stickers: []
+        }
+      }
+    };
+    loadNoteData();
+    isArrangeMode = true; toggleEditMode(); // Set to write mode
+    elements.editorView.classList.add('active');
+    setTimeout(() => { elements.editor.focus(); saveSelection(); }, 100);
+  }
+
+  function openNote(id) {
+    isNewNote = false;
+    currentNote = notes.find(n => n.id === id);
+    if(!currentNote) return;
+    
+    // Ensure pages structure exists for backward compatibility
+    if (!currentNote.pages) {
+      currentNote.pages = {
+        1: {
+          content: currentNote.content || '',
+          stickers: currentNote.stickers || []
+        }
+      };
+    }
+    
+    loadNoteData();
+    isArrangeMode = true; toggleEditMode();
+    elements.editorView.classList.add('active');
+  }
+
+  function loadNoteData() {
+    elements.title.value = currentNote.title;
+    
+    // Load current page data
+    const currentPageData = currentNote.pages[currentPage] || {
+      content: '',
+      stickers: []
+    };
+    
+    elements.editor.innerHTML = currentPageData.content;
+    applyTheme(currentNote.theme, false);
+    applyPaper(currentNote.paper);
+    
+    // Set fixed dimensions for paper
+    elements.paper.style.width = currentNote.width ? `${currentNote.width}px` : '100%';
+    elements.paper.style.height = currentNote.height ? `${currentNote.height}px` : '1760px';
+    elements.paper.style.maxWidth = currentNote.width ? `${currentNote.width}px` : '800px';
+    
+    // Update page navigation
+    updatePageNavigation();
+    
+    // Clear sticker layers
+    elements.layerBack.innerHTML = '';
+    elements.layerFront.innerHTML = '';
+    
+    // Render stickers for current page
+    (currentPageData.stickers || []).forEach(renderSticker);
+    savedRange = null;
+  }
+
+  function autoSave() {
+    if (!currentNote) return;
+    
+    // Check if note is empty (no title, no content, no stickers)
+    const hasContent = elements.title.value.trim() || 
+                       elements.editor.textContent.trim() || 
+                       (currentNote.pages && currentNote.pages[currentPage] && 
+                        currentNote.pages[currentPage].stickers && 
+                        currentNote.pages[currentPage].stickers.length > 0);
+    
+    if (!hasContent && isNewNote) {
+      // Don't save empty new notes
+      return;
+    }
+    
+    // Auto Title Logic: If empty, take first 4 words
+    if(!elements.title.value.trim() && elements.editor.innerText.trim()) {
+      const words = elements.editor.innerText.trim().split(/\s+/).slice(0, 4).join(' ');
+      currentNote.title = words;
+      // Note: We don't update the Input value to keep it clean, but we save it.
+      // If you want to show it: elements.title.value = words; 
+    } else {
+      currentNote.title = elements.title.value;
+    }
+
+    // Save current page data
+    if (!currentNote.pages) currentNote.pages = {};
+    if (!currentNote.pages[currentPage]) currentNote.pages[currentPage] = {};
+    
+    currentNote.pages[currentPage].content = elements.editor.innerHTML;
+    currentNote.pages[currentPage].stickers = getStickersData();
+    
+    // Update legacy fields for backward compatibility
+    if (currentPage === 1) {
+      currentNote.content = elements.editor.innerHTML;
+      currentNote.stickers = getStickersData();
+    }
+    
+    currentNote.updatedAt = Date.now();
+    currentNote.width = noteWidth;
+    currentNote.height = noteHeight;
+
+    const idx = notes.findIndex(n => n.id === currentNote.id);
+    if(idx > -1) notes[idx] = currentNote;
+    else { notes.unshift(currentNote); isNewNote = false; }
+    
+    // Compress data before saving
+    const compressedData = compressData(notes);
+    localStorage.setItem(NOTES_KEY, compressedData);
+    $('saveIndicator').innerText = 'Disimpan...';
+    setTimeout(() => $('saveIndicator').innerText = '', 2000);
+  }
+
+  function closeEditor() {
+    if (!currentNote) return;
+    
+    // Check if note is empty
+    const hasContent = elements.title.value.trim() || 
+                       elements.editor.textContent.trim() || 
+                       (currentNote.pages && currentNote.pages[currentPage] && 
+                        currentNote.pages[currentPage].stickers && 
+                        currentNote.pages[currentPage].stickers.length > 0);
+    
+    if (!hasContent && isNewNote) {
+      // Don't save empty new notes, just close
+      elements.editorView.classList.remove('active');
+      return;
+    }
+    
+    autoSave();
+    elements.editorView.classList.remove('active');
+    renderList();
+  }
+
+  function deleteNote(id, e) {
+    e.stopPropagation();
+    if(confirm('Hapus catatan?')) {
+      notes = notes.filter(n => n.id !== id);
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      renderList();
+    }
+  }
+
+  // --- FULLSCREEN FUNCTIONS ---
+  function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    if (isFullscreen) {
+      if (elements.editorView.requestFullscreen) {
+        elements.editorView.requestFullscreen();
+      } else if (elements.editorView.webkitRequestFullscreen) { /* Safari */
+        elements.editorView.webkitRequestFullscreen();
+      } else if (elements.editorView.msRequestFullscreen) { /* IE11 */
+        elements.editorView.msRequestFullscreen();
+      }
+      elements.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) { /* Safari */
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) { /* IE11 */
+        document.msExitFullscreen();
+      }
+      elements.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+    }
+  }
+
+  function toggleListFullscreen() {
+    isFullscreen = !isFullscreen;
+    if (isFullscreen) {
+      if (document.body.requestFullscreen) {
+        document.body.requestFullscreen();
+      } else if (document.body.webkitRequestFullscreen) { /* Safari */
+        document.body.webkitRequestFullscreen();
+      } else if (document.body.msRequestFullscreen) { /* IE11 */
+        document.body.msRequestFullscreen();
+      }
+      elements.listFullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) { /* Safari */
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) { /* IE11 */
+        document.msExitFullscreen();
+      }
+      elements.listFullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+    }
+  }
+
+  // --- EXPORT/IMPORT FUNCTIONS ---
+  function exportNotes() {
+    const dataStr = JSON.stringify(notes, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `zeli_garden_backup_${new Date().toISOString().slice(0,10)}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  }
+
+  function importNotes(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        const importedNotes = JSON.parse(event.target.result);
+        if (Array.isArray(importedNotes)) {
+          notes = importedNotes;
+          localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+          renderList();
+          alert('Import berhasil!');
+        } else {
+          alert('File tidak valid. Harap unggah file backup yang benar.');
+        }
+      } catch (error) {
+        alert('Error saat mengimpor file: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // --- DATA COMPRESSION ---
+  function compressData(data) {
+    // Simple compression: remove unnecessary spaces
+    return JSON.stringify(data);
+  }
+
+  // --- EDITOR UTILS ---
+  function saveSelection() {
+    if(isArrangeMode) return;
+    const sel = window.getSelection();
+    if(sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if(elements.editor.contains(range.commonAncestorContainer)) savedRange = range;
+    }
+  }
+
+  function restoreSelection() {
+    elements.editor.focus();
+    if(savedRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    } else {
+      // Place cursor at end if lost
+      const range = document.createRange();
+      range.selectNodeContents(elements.editor);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
+  function execCmd(cmd, val=null) {
+    restoreSelection(); 
+    document.execCommand(cmd, false, val); 
+    saveSelection(); 
+    autoSave();
+  }
+
+  function toggleEditMode() {
+    isArrangeMode = !isArrangeMode;
+    const btn = $('modeBtn');
+    if(isArrangeMode) {
+      elements.paper.classList.add('arrange-mode');
+      elements.editor.contentEditable = false;
+      btn.innerHTML = '<i class="fas fa-hand-pointer"></i>';
+      btn.classList.remove('active');
+    } else {
+      elements.paper.classList.remove('arrange-mode');
+      elements.editor.contentEditable = true;
+      btn.innerHTML = '<i class="fas fa-pen"></i>';
+      btn.classList.add('active');
+      restoreSelection();
+    }
+  }
+
+  function toggleAlign() {
+    restoreSelection();
+    const modes = ['justifyLeft', 'justifyCenter', 'justifyRight'];
+    const icons = ['fa-align-left', 'fa-align-center', 'fa-align-right'];
+    let idx = parseInt($('alignBtn').dataset.idx || 0);
+    idx = (idx + 1) % 3;
+    document.execCommand(modes[idx]);
+    $('alignBtn').dataset.idx = idx;
+    $('alignBtn').innerHTML = `<i class="fas ${icons[idx]}"></i>`;
+    saveSelection();
+  }
+
+  function insertCheckbox() {
+    restoreSelection();
+    document.execCommand('insertHTML', false, '<input type="checkbox" style="vertical-align:middle; margin-right:5px;">&nbsp;');
+    saveSelection();
+  }
+
+  function insertImagePrompt() {
+    const input = document.createElement('input'); input.type='file'; input.accept='image/*';
+    input.onchange = e => {
+      const f = e.target.files[0];
+      if(f) {
+        const r = new FileReader();
+        r.onload = ev => { 
+          restoreSelection(); 
+          const imgHtml = `<img src="${ev.target.result}" style="max-width:300px; max-height:300px; display:block; margin:10px 0; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); float:left; margin-right:10px; margin-bottom:10px; clear:both;">`;
+          document.execCommand('insertHTML', false, imgHtml); 
+          saveSelection(); 
+        };
+        r.readAsDataURL(f);
+      }
+    };
+    input.click();
+  }
+
+  // --- STICKER ENGINE (Simplified with 4 controls) ---
+  function addSticker(emoji) {
+    const s = { 
+      id: 's'+Date.now(), 
+      emoji, 
+      x: 100, 
+      y: 100, 
+      rot: 0, 
+      scale: 1.5, 
+      layer: 'front',
+      page: currentPage 
+    };
+    renderSticker(s);
+    autoSave();
+    // Don't close panel after adding sticker
+  }
+
+  function renderSticker(data) {
+    const el = document.createElement('div');
+    el.className = 'sticker'; el.id = data.id;
+    el.style.left = data.x + 'px'; el.style.top = data.y + 'px';
+    el.style.transform = `rotate(${data.rot}deg) scale(${data.scale})`;
+    el.dataset.emoji = data.emoji; el.dataset.rot = data.rot; 
+    el.dataset.scale = data.scale; el.dataset.layer = data.layer;
+    el.dataset.page = data.page || 1;
+    
+    // Only show sticker if it's on the current page
+    if (parseInt(el.dataset.page) !== currentPage) {
+      el.style.display = 'none';
+    }
+    
+    el.innerHTML = `
+      <div class="sticker-content">${data.emoji}</div>
+      <div class="sticker-controls">
+        <div class="ctrl-btn ctrl-del"><i class="fas fa-times"></i></div>
+        <div class="ctrl-btn ctrl-layer"><i class="fas fa-layer-group"></i></div>
+        <div class="ctrl-rotate"><i class="fas fa-sync-alt"></i></div>
+        <div class="ctrl-resize"></div>
+      </div>
+    `;
+
+    const parent = data.layer === 'back' ? elements.layerBack : elements.layerFront;
+    parent.appendChild(el);
+    attachStickerEvents(el);
+  }
+
+  function attachStickerEvents(el) {
+    // Mouse & Touch Logic
+    let startX, startY, startRot, startScale;
+    let initialPinchDist = 0;
+    let initialPinchAngle = 0;
+
+    const onStart = (e) => {
+      if(e.target.classList.contains('ctrl-btn') || e.target.classList.contains('ctrl-resize')) return;
+      selectSticker(el);
+      
+      if(e.type === 'touchstart' && e.touches.length === 2) {
+        // Pinch / Rotate Mode
+        e.preventDefault();
+        const t1 = e.touches[0]; const t2 = e.touches[1];
+        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        initialPinchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+        startScale = parseFloat(el.dataset.scale);
+        startRot = parseFloat(el.dataset.rot);
+      } else {
+        // Drag Mode
+        const p = e.type.includes('mouse') ? e : e.touches[0];
+        startX = p.clientX; startY = p.clientY;
+        el.dataset.startX = el.offsetLeft;
+        el.dataset.startY = el.offsetTop;
+      }
+      
+      document.addEventListener(e.type === 'mousedown' ? 'mousemove' : 'touchmove', onMove, {passive:false});
+      document.addEventListener(e.type === 'mousedown' ? 'mouseup' : 'touchend', onEnd);
+    };
+
+    const onMove = (e) => {
+      if(e.type === 'touchmove' && e.touches.length === 2) {
+        // Handle Pinch/Rotate
+        e.preventDefault();
+        const t1 = e.touches[0]; const t2 = e.touches[1];
+        const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+        
+        // Scale
+        const scaleDiff = (dist / initialPinchDist);
+        const newScale = Math.max(0.5, Math.min(5, startScale * scaleDiff));
+        
+        // Rotate (convert radians to deg)
+        const angleDiff = (angle - initialPinchAngle) * (180/Math.PI);
+        const newRot = startRot + angleDiff;
+
+        el.style.transform = `rotate(${newRot}deg) scale(${newScale})`;
+        el.dataset.scale = newScale;
+        el.dataset.rot = newRot;
+
+      } else if ((e.type === 'mousemove' || e.touches.length === 1)) {
+        // Handle Drag
+        e.preventDefault(); // Stop page scroll
+        const p = e.type.includes('mouse') ? e : e.touches[0];
+        const dx = p.clientX - startX;
+        const dy = p.clientY - startY;
+        el.style.left = (parseFloat(el.dataset.startX) + dx) + 'px';
+        el.style.top = (parseFloat(el.dataset.startY) + dy) + 'px';
+      }
+    };
+
+    const onEnd = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchend', onEnd);
+      autoSave();
+    };
+
+    el.addEventListener('mousedown', onStart);
+    el.addEventListener('touchstart', onStart, {passive:false});
+    
+    // Double click to rotate
+    el.addEventListener('dblclick', () => {
+      const currentRot = parseFloat(el.dataset.rot) || 0;
+      const newRot = currentRot + 45;
+      el.style.transform = `rotate(${newRot}deg) scale(${el.dataset.scale})`;
+      el.dataset.rot = newRot;
+      autoSave();
+    });
+
+    // Button Events
+    el.querySelector('.ctrl-del').addEventListener('click', (e) => { e.stopPropagation(); el.remove(); autoSave(); });
+    el.querySelector('.ctrl-layer').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isFront = el.dataset.layer === 'front';
+      el.dataset.layer = isFront ? 'back' : 'front';
+      if(isFront) elements.layerBack.appendChild(el); else elements.layerFront.appendChild(el);
+      autoSave();
+    });
+    
+    // Rotate handle
+    el.querySelector('.ctrl-rotate').addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      selectSticker(el);
+      
+      const startRot = parseFloat(el.dataset.rot) || 0;
+      const rect = el.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      const onRotateMove = (e) => {
+        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI) + 90;
+        el.style.transform = `rotate(${angle}deg) scale(${el.dataset.scale})`;
+        el.dataset.rot = angle;
+      };
+      
+      const onRotateEnd = () => {
+        document.removeEventListener('mousemove', onRotateMove);
+        document.removeEventListener('mouseup', onRotateEnd);
+        autoSave();
+      };
+      
+      document.addEventListener('mousemove', onRotateMove);
+      document.addEventListener('mouseup', onRotateEnd);
+    });
+    
+    // Resize handle
+    el.querySelector('.ctrl-resize').addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      selectSticker(el);
+      
+      const startScale = parseFloat(el.dataset.scale) || 1;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      
+      const onResizeMove = (e) => {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        const delta = Math.max(deltaX, deltaY);
+        
+        const newScale = Math.max(0.5, Math.min(5, startScale + (delta / 100)));
+        el.style.transform = `rotate(${el.dataset.rot}deg) scale(${newScale})`;
+        el.dataset.scale = newScale;
+      };
+      
+      const onResizeEnd = () => {
+        document.removeEventListener('mousemove', onResizeMove);
+        document.removeEventListener('mouseup', onResizeEnd);
+        autoSave();
+      };
+      
+      document.addEventListener('mousemove', onResizeMove);
+      document.addEventListener('mouseup', onResizeEnd);
+    });
+  }
+
+  function selectSticker(el) {
+    if(selectedSticker) selectedSticker.classList.remove('selected');
+    selectedSticker = el; el.classList.add('selected');
+  }
+  function deselectSticker() {
+    if(selectedSticker) { selectedSticker.classList.remove('selected'); selectedSticker = null; }
+  }
+
+  function getStickersData() {
+    const arr = [];
+    [elements.layerBack, elements.layerFront].forEach(layer => {
+      Array.from(layer.children).forEach(el => {
+        arr.push({ 
+          id: el.id, emoji: el.dataset.emoji, 
+          x: parseFloat(el.style.left), y: parseFloat(el.style.top), 
+          rot: parseFloat(el.dataset.rot), scale: parseFloat(el.dataset.scale), 
+          layer: el.dataset.layer, page: parseInt(el.dataset.page) || 1
+        });
+      });
+    });
+    return arr;
+  }
+
+  // --- PAGE MANAGEMENT ---
+  function updatePageNavigation() {
+    if (!currentNote) return;
+    
+    // Get the number of pages
+    const pages = Object.keys(currentNote.pages || {}).length;
+    const pageNav = elements.pageNav;
+    
+    if (pages > 1) {
+      pageNav.style.display = 'flex';
+      pageNav.innerHTML = '';
+      
+      // Get sorted page numbers
+      const pageNumbers = Object.keys(currentNote.pages || {}).map(Number).sort((a, b) => a - b);
+      
+      pageNumbers.forEach(pageNum => {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn';
+        if (pageNum === currentPage) btn.classList.add('active');
+        btn.dataset.page = pageNum;
+        btn.textContent = pageNum;
+        pageNav.appendChild(btn);
+      });
+      
+      // Add new page button
+      const addBtn = document.createElement('button');
+      addBtn.className = 'page-btn add-page';
+      addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+      addBtn.title = 'Add Page';
+      pageNav.appendChild(addBtn);
+      
+      // Re-attach event listener to new button
+      addBtn.addEventListener('click', addNewPage);
+    } else {
+      pageNav.style.display = 'none';
+    }
+  }
+
+  function switchToPage(pageNum) {
+    if (!currentNote) return;
+    
+    // Save current page content before switching
+    autoSave();
+    
+    // Update current page
+    currentPage = pageNum;
+    
+    // Update page navigation
+    document.querySelectorAll('.page-btn').forEach(btn => {
+      if (parseInt(btn.dataset.page) === pageNum) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    
+    // Clear sticker layers
+    elements.layerBack.innerHTML = '';
+    elements.layerFront.innerHTML = '';
+    
+    // Load the target page content
+    const targetPageData = currentNote.pages[pageNum] || {
+      content: '',
+      stickers: []
+    };
+    
+    elements.editor.innerHTML = targetPageData.content;
+    
+    // Render stickers for the target page
+    (targetPageData.stickers || []).forEach(renderSticker);
+    
+    // Show/hide stickers based on page
+    document.querySelectorAll('.sticker').forEach(sticker => {
+      if (parseInt(sticker.dataset.page) === pageNum) {
+        sticker.style.display = 'flex';
+      } else {
+        sticker.style.display = 'none';
+      }
+    });
+  }
+
+  function addNewPage() {
+    if (!currentNote) return;
+    
+    // Save current page before adding a new one
+    autoSave();
+    
+    // Get the highest page number
+    const pageNumbers = Object.keys(currentNote.pages || {}).map(Number);
+    const newPageNum = pageNumbers.length > 0 ? Math.max(...pageNumbers) + 1 : 1;
+    
+    // Create a new empty page
+    if (!currentNote.pages) currentNote.pages = {};
+    currentNote.pages[newPageNum] = {
+      content: '',
+      stickers: []
+    };
+    
+    // Update page navigation and switch to the new page
+    updatePageNavigation();
+    switchToPage(newPageNum);
+    autoSave();
+  }
+
+  // --- SCREENSHOT FUNCTION ---
+  function takeScreenshot() {
+    // Save current page before taking screenshot
+    autoSave();
+    
+    // Use html2canvas to capture the paper container
+    html2canvas(elements.paper, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      scale: 1,
+      logging: false,
+      width: elements.paper.offsetWidth,
+      height: elements.paper.offsetHeight
+    }).then(canvas => {
+      // Convert canvas to blob
+      canvas.toBlob(blob => {
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `zeli_garden_page_${currentPage}_${new Date().toISOString().slice(0,10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }).catch(error => {
+      console.error('Error taking screenshot:', error);
+      alert('Gagal mengambil screenshot. Silakan coba lagi.');
+    });
+  }
+
+  // --- PANELS & THEMES ---
+  function openPanel(tab) {
+    saveSelection();
+    elements.panel.classList.add('open'); elements.overlay.classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).click();
+  }
+  function closePanel() {
+    elements.panel.classList.remove('open'); elements.overlay.classList.remove('active');
+    if(!isArrangeMode) restoreSelection();
+  }
+
+  function renderPanel(tab) {
+    elements.panelContent.innerHTML = '';
+
+    if(tab === 'stickers') {
+      // Initialize Picmo
+      const container = document.createElement('div');
+      container.id = 'emojiContainer';
+      elements.panelContent.appendChild(container);
+      
+      if(!emojiPicker) {
+        emojiPicker = picmo.createPicker({ rootElement: container, native: true });
+        emojiPicker.addEventListener('emoji:select', selection => {
+          addSticker(selection.emoji);
+          closePanel(); // Close panel after selecting sticker
+        });
+      } else {
+        // Re-append existing instance logic if needed, but creating new is safer for layout
+        container.innerHTML = ''; 
+        emojiPicker = picmo.createPicker({ rootElement: container, native: true });
+        emojiPicker.addEventListener('emoji:select', selection => {
+          addSticker(selection.emoji);
+          closePanel(); // Close panel after selecting sticker
+        });
+      }
+    } 
+    else if(tab === 'stickers2') {
+      // Render OpenMoji stickers with categories
+      const categories = ['all', 'nature', 'animals', 'food', 'activities', 'objects', 'symbols'];
+      let html = '<div class="sticker-categories">';
+      
+      categories.forEach(cat => {
+        html += `<div class="sticker-category ${cat === 'all' ? 'active' : ''}" data-category="${cat}">${cat}</div>`;
+      });
+      
+      html += '</div><div class="sticker-grid">';
+      
+      // Filter and render stickers
+      const filteredStickers = openmojiData.slice(0, 50); // Limit for performance
+      filteredStickers.forEach(sticker => {
+        html += `<div class="sticker-item" data-emoji="${sticker.emoji}">${sticker.emoji}</div>`;
+      });
+      
+      html += '</div>';
+      elements.panelContent.innerHTML = html;
+      
+      // Add click events to stickers
+      document.querySelectorAll('.sticker-item').forEach(item => {
+        item.addEventListener('click', () => {
+          addSticker(item.dataset.emoji);
+          closePanel(); // Close panel after selecting sticker
+        });
+      });
+      
+      // Add click events to categories
+      document.querySelectorAll('.sticker-category').forEach(cat => {
+        cat.addEventListener('click', () => {
+          document.querySelectorAll('.sticker-category').forEach(c => c.classList.remove('active'));
+          cat.classList.add('active');
+          
+          const category = cat.dataset.category;
+          let filteredStickers = openmojiData;
+          
+          if (category !== 'all') {
+            filteredStickers = openmojiData.filter(sticker => 
+              sticker.tags && sticker.tags.includes(category)
+            );
+          }
+          
+          const grid = document.querySelector('.sticker-grid');
+          grid.innerHTML = '';
+          
+          filteredStickers.slice(0, 50).forEach(sticker => {
+            const item = document.createElement('div');
+            item.className = 'sticker-item';
+            item.dataset.emoji = sticker.emoji;
+            item.textContent = sticker.emoji;
+            item.addEventListener('click', () => {
+              addSticker(sticker.emoji);
+              closePanel(); // Close panel after selecting sticker
+            });
+            grid.appendChild(item);
+          });
+        });
+      });
+    }
+    else if(tab === 'style') {
+      // Font & Style with toggle functionality
+      const fonts = ['Quicksand', 'Caveat', 'Kalam', 'Sacramento', 'Dancing Script', 'Indie Flower', 'Courier New'];
+      let h = `<div class="tool-grid">`;
+      fonts.forEach(f => {
+        const isActive = styleStates[f] === true;
+        h += `<div class="tool-item ${isActive ? 'active' : ''}" onmousedown="evtPd(event)" onclick="toggleFont('${f}')" style="font-family:${f}; font-size:16px;">Aa<br><span>${f}</span></div>`;
+      });
+      h += `</div><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`;
+      h += `<div class="tool-grid">
+         <div class="tool-item" onmousedown="evtPd(event)" onclick="toggleStyle('fontSize', 3)">Norm</div>
+         <div class="tool-item" onmousedown="evtPd(event)" onclick="toggleStyle('fontSize', 5)">Big</div>
+         <div class="tool-item" onmousedown="evtPd(event)" onclick="toggleStyle('hiliteColor', '#ffd6e0')"><span style="background:#ffd6e0">Hilite</span></div>
+      </div>`;
+      elements.panelContent.innerHTML = h;
+    }
+    else if(tab === 'theme') {
+      const themes = [
+        {id:'default', name:'🌿 Soft', col:'#3f6f45', bg:'#fffaf0'},
+        {id:'dark', name:'🌑 Night', col:'#ddd', bg:'#222'},
+        {id:'pink', name:'🌸 Pink', col:'#c56582', bg:'#fff0f5'},
+        {id:'blue', name:'🦋 Sky', col:'#333', bg:'#f0f8ff'}
+      ];
+      let h = '<div class="theme-grid">';
+      themes.forEach(t => {
+        h += `<div class="theme-card" onmousedown="evtPd(event)" style="background:${t.col}" onclick="applyTheme('${t.id}')">
+          <span>${t.name}</span><div style="width:15px;height:15px;border-radius:50%;background:${t.bg}"></div>
+        </div>`;
+      });
+      h += '</div>';
+      elements.panelContent.innerHTML = h;
+    }
+    else if(tab === 'format') {
+       elements.panelContent.innerHTML = `
+        <div class="tool-grid">
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertUnorderedList'); closePanel();"><i class="fas fa-list-ul"></i><span>List</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertOrderedList'); closePanel();"><i class="fas fa-list-ol"></i><span>123</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertHorizontalRule'); closePanel();"><i class="fas fa-minus"></i><span>Line</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="insertQuote(); closePanel();"><i class="fas fa-quote-right"></i><span>Quote</span></div>
+        </div>`;
+    }
+    else if(tab === 'paper') {
+       elements.panelContent.innerHTML = `
+        <div class="tool-grid">
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('lines'); closePanel();"><i class="fas fa-bars"></i><span>Garis</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('grid'); closePanel();"><i class="fas fa-border-all"></i><span>Kotak</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('plain'); closePanel();"><i class="far fa-file"></i><span>Polos</span></div>
+        </div>`;
+    }
+    else if(tab === 'meta') {
+       elements.panelContent.innerHTML = `
+        <div class="tool-grid">
+           <div class="tool-item" onmousedown="evtPd(event)" onclick="alert(elements.editor.innerText.split(' ').length + ' Words'); closePanel();"><i class="fas fa-calculator"></i><span>Count</span></div>
+           <div class="tool-item" onmousedown="evtPd(event)" onclick="const m=prompt('Mood?'); if(m){currentNote.mood=m; autoSave();} closePanel();"><i class="far fa-smile"></i><span>Mood</span></div>
+        </div>`;
+    }
+  }
+
+  function toggleFont(font) {
+    restoreSelection();
+    const selection = window.getSelection();
+    
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      
+      if (selectedText) {
+        // Check if the selected text already has this font
+        const parentElement = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+          ? range.commonAncestorContainer.parentElement 
+          : range.commonAncestorContainer;
+        
+        const currentFont = window.getComputedStyle(parentElement).fontFamily;
+        const hasFont = currentFont.includes(font);
+        
+        if (hasFont) {
+          // Remove font
+          document.execCommand('fontName', false, 'Quicksand');
+          styleStates[font] = false;
+        } else {
+          // Apply font
+          document.execCommand('fontName', false, font);
+          styleStates[font] = true;
+        }
+      } else {
+        // No text selected, just toggle state for future typing
+        styleStates[font] = !styleStates[font];
+        document.execCommand('fontName', false, styleStates[font] ? font : 'Quicksand');
+      }
+      
+      // Update UI
+      renderPanel('style');
+      closePanel(); // Close panel after selecting font
+    }
+    
+    saveSelection();
+    autoSave();
+  }
+
+  function toggleStyle(cmd, val) {
+    restoreSelection();
+    const selection = window.getSelection();
+    
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      
+      if (selectedText) {
+        // Check if the selected text already has this style
+        const parentElement = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+          ? range.commonAncestorContainer.parentElement 
+          : range.commonAncestorContainer;
+        
+        let hasStyle = false;
+        
+        if (cmd === 'fontSize') {
+          const currentSize = parentElement.style.fontSize || window.getComputedStyle(parentElement).fontSize;
+          hasStyle = currentSize === (val === 3 ? '16px' : '20px');
+        } else if (cmd === 'hiliteColor') {
+          const currentColor = parentElement.style.backgroundColor || window.getComputedStyle(parentElement).backgroundColor;
+          hasStyle = currentColor === val;
+        }
+        
+        if (hasStyle) {
+          // Remove the style
+          if (cmd === 'fontSize') {
+            document.execCommand('fontSize', false, '3');
+          } else if (cmd === 'hiliteColor') {
+            document.execCommand('hiliteColor', false, 'transparent');
+          }
+        } else {
+          // Apply the style
+          document.execCommand(cmd, false, val);
+        }
+      } else {
+        // No text selected, just apply style for future typing
+        document.execCommand(cmd, false, val);
+      }
+      
+      // Update UI
+      renderPanel('style');
+      closePanel(); // Close panel after selecting style
+    }
+    
+    saveSelection();
+    autoSave();
+  }
+
+  function insertQuote() {
+    restoreSelection();
+    document.execCommand('insertHTML', false, '<blockquote>Quote</blockquote>');
+    saveSelection();
+  }
+
+  function setFont(f) { execCmd('fontName', f); }
+  
+  function applyTheme(id, save=true) {
+    if(save) { currentNote.theme = id; autoSave(); }
+    const t = {
+      'default': { bg:'#fffaf0', col:'#333', font:'Quicksand'},
+      'dark': { bg:'#2d2d2d', col:'#e0e0e0', font:'Inter'},
+      'pink': { bg:'#fff0f5', col:'#880e4f', font:'Caveat'},
+      'blue': { bg:'#f0f8ff', col:'#01579b', font:'Nunito'}
+    }[id] || {bg:'#fffaf0'};
+    
+    elements.paper.style.backgroundColor = t.bg;
+    elements.editor.style.color = t.col;
+    if(save) elements.editor.style.fontFamily = t.font;
+    
+    if(save) closePanel(); // Close panel after applying theme
+  }
+
+  function applyPaper(type) {
+    currentNote.paper = type;
+    const c = currentNote.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    let bg = '';
+    if(type === 'lines') bg = `repeating-linear-gradient(transparent, transparent 31px, ${c} 31px, ${c} 32px)`;
+    if(type === 'grid') bg = `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`;
+    elements.pattern.style.backgroundImage = bg;
+    elements.pattern.style.backgroundSize = type === 'grid' ? '20px 20px' : '100% 32px';
+    autoSave();
+    closePanel(); // Close panel after applying paper style
+  }
+
+  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }}
+</script>
+</body>
+</html>ly=Poppins:wght@300;400&family=Nunito:wght@400;700&family=Baloo+2&family=Comic+Neue&family=Inter:wght@300;400&family=Caveat:wght@400;700&family=Kalam&family=Gloria+Hallelujah&family=Reenie+Beanie&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Picmo Emoji Picker CDN -->
