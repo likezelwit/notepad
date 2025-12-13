@@ -480,6 +480,17 @@
       z-index: 10;
     }
 
+    /* Export All button for list view */
+    .export-all-btn {
+      position: absolute; bottom: 80px; right: 20px;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: #ff9800; color: white;
+      border: none; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
     /* Page navigation for multi-page notes */
     .page-nav {
       position: fixed; top: 80px; right: 20px;
@@ -511,7 +522,7 @@
 
     /* Import button in list view */
     .import-btn {
-      position: absolute; bottom: 80px; right: 20px;
+      position: absolute; bottom: 140px; right: 20px;
       width: 50px; height: 50px; border-radius: 50%;
       background: #4D89FF; color: white;
       border: none; font-size: 20px;
@@ -542,6 +553,107 @@
     .flaticon-link i {
       margin-right: 5px;
       color: #4CAF50;
+    }
+
+    /* Export Dialog */
+    .export-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .export-dialog.hidden {
+      display: none;
+    }
+    
+    .export-dialog-content {
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .export-dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .export-dialog-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .export-dialog-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #999;
+      cursor: pointer;
+    }
+    
+    .export-dialog-body {
+      margin-bottom: 20px;
+    }
+    
+    .export-dialog-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .export-dialog-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    
+    .export-dialog-select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    
+    .export-dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    
+    .export-dialog-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .export-dialog-cancel {
+      background-color: #f0f0f0;
+      color: #666;
+    }
+    
+    .export-dialog-confirm {
+      background-color: var(--green-3);
+      color: white;
     }
 
     /* Mobile optimizations */
@@ -597,6 +709,11 @@
   <!-- Fullscreen button for list view -->
   <button class="list-fullscreen-btn" id="listFullscreenBtn" title="Fullscreen">
     <i class="fas fa-expand"></i>
+  </button>
+  
+  <!-- Export All button for list view -->
+  <button class="export-all-btn" id="listExportAllBtn" title="Export All Notes">
+    <i class="fas fa-download"></i>
   </button>
   
   <!-- Import button for list view -->
@@ -695,6 +812,29 @@
 <audio id="sfxClick" src="sounds/click.mp3" preload="auto"></audio>
 <audio id="sfxPage" src="sounds/page.wav" preload="auto"></audio>
 
+<!-- Export Dialog -->
+<div class="export-dialog hidden" id="exportDialog">
+  <div class="export-dialog-content">
+    <div class="export-dialog-header">
+      <h3 class="export-dialog-title">Export Catatan</h3>
+      <button class="export-dialog-close" id="closeExportDialog">&times;</button>
+    </div>
+    <div class="export-dialog-body">
+      <label class="export-dialog-label" for="exportFileName">Nama File:</label>
+      <input type="text" class="export-dialog-input" id="exportFileName" placeholder="Nama file...">
+      
+      <label class="export-dialog-label" for="exportFileType">Format File:</label>
+      <select class="export-dialog-select" id="exportFileType">
+        <option value="json">JSON</option>
+      </select>
+    </div>
+    <div class="export-dialog-footer">
+      <button class="export-dialog-btn export-dialog-cancel" id="cancelExport">Batal</button>
+      <button class="export-dialog-btn export-dialog-confirm" id="confirmExport">Export</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // --- HELPERS ---
   const $ = id => document.getElementById(id);
@@ -734,8 +874,11 @@
     modeSelection: $('modeSelection'), listFullscreenBtn: $('listFullscreenBtn'),
     pageNav: $('pageNav'), addPageBtn: $('addPageBtn'),
     screenshotBtn: $('screenshotBtn'), customStickerInput: $('customStickerInput'),
-    listImportBtn: $('listImportBtn'),
-    prevPageBtn: $('prevPageBtn'), nextPageBtn: $('nextPageBtn')
+    listImportBtn: $('listImportBtn'), listExportAllBtn: $('listExportAllBtn'),
+    prevPageBtn: $('prevPageBtn'), nextPageBtn: $('nextPageBtn'),
+    exportDialog: $('exportDialog'), exportFileName: $('exportFileName'),
+    exportFileType: $('exportFileType'), closeExportDialog: $('closeExportDialog'),
+    cancelExport: $('cancelExport'), confirmExport: $('confirmExport')
   };
 
   // --- INIT ---
@@ -815,12 +958,18 @@
     elements.listFullscreenBtn.addEventListener('click', toggleListFullscreen);
     
     // Export/Import buttons
-    elements.exportBtn.addEventListener('click', exportNotes);
+    elements.exportBtn.addEventListener('click', () => showExportDialog('single'));
     elements.importBtn.addEventListener('click', () => elements.importFileInput.click());
     elements.importFileInput.addEventListener('change', importNotes);
     
-    // List view import button
+    // List view import/export buttons
     elements.listImportBtn.addEventListener('click', () => elements.importFileInput.click());
+    elements.listExportAllBtn.addEventListener('click', () => showExportDialog('all'));
+
+    // Export dialog buttons
+    elements.closeExportDialog.addEventListener('click', hideExportDialog);
+    elements.cancelExport.addEventListener('click', hideExportDialog);
+    elements.confirmExport.addEventListener('click', performExport);
 
     // Panel Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -844,6 +993,11 @@
         } else {
           toggleListFullscreen();
         }
+      }
+      
+      // Close export dialog with ESC
+      if (e.key === 'Escape' && !elements.exportDialog.classList.contains('hidden')) {
+        hideExportDialog();
       }
     });
     
@@ -1216,7 +1370,78 @@
   }
 
   // --- EXPORT/IMPORT FUNCTIONS ---
-  function exportNotes() {
+  function showExportDialog(type) {
+    // Set default filename based on type
+    if (type === 'single' && currentNote) {
+      // For single note export, use the note title
+      const title = currentNote.title || 'Tanpa_Judul';
+      elements.exportFileName.value = `${title}_GardenNotepad.json`;
+    } else if (type === 'all') {
+      // For all notes export, use a generic name
+      elements.exportFileName.value = `AllNotes_GardenNotepad.json`;
+    }
+    
+    // Store the export type for later use
+    elements.exportDialog.dataset.exportType = type;
+    
+    // Show the dialog
+    elements.exportDialog.classList.remove('hidden');
+  }
+  
+  function hideExportDialog() {
+    elements.exportDialog.classList.add('hidden');
+  }
+  
+  function performExport() {
+    const exportType = elements.exportDialog.dataset.exportType;
+    const fileName = elements.exportFileName.value.trim();
+    
+    if (!fileName) {
+      alert('Silakan masukkan nama file.');
+      return;
+    }
+    
+    if (exportType === 'single' && currentNote) {
+      // Export single note
+      exportSingleNote(fileName);
+    } else if (exportType === 'all') {
+      // Export all notes
+      exportAllNotes(fileName);
+    }
+    
+    // Hide the dialog
+    hideExportDialog();
+  }
+  
+  function exportSingleNote(fileName) {
+    // Create a comprehensive export object with all necessary data
+    const exportData = {
+      version: "1.0",
+      exportDate: new Date().toISOString(),
+      appInfo: {
+        name: "Zeli's Garden v4",
+        description: "Estetika & Emosi"
+      },
+      note: currentNote,
+      customStickers: customStickers
+    };
+    
+    // Convert to JSON string with formatting
+    const dataStr = JSON.stringify(exportData, null, 2);
+    
+    // Create download link
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', fileName);
+    linkElement.click();
+    
+    // Show success message
+    alert(`Catatan "${currentNote.title || 'Tanpa Judul'}" berhasil diunduh!`);
+  }
+  
+  function exportAllNotes(fileName) {
     // Create a comprehensive export object with all necessary data
     const exportData = {
       version: "1.0",
@@ -1234,15 +1459,14 @@
     
     // Create download link
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = `zeli_garden_backup_${new Date().toISOString().slice(0,10)}.json`;
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.setAttribute('download', fileName);
     linkElement.click();
     
     // Show success message
-    alert('Backup berhasil diunduh! File berisi semua catatan dan stiker kustom Anda.');
+    alert(`Semua catatan berhasil diunduh! Total: ${notes.length} catatan.`);
   }
 
   function importNotes(e) {
