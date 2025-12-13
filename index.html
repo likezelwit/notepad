@@ -1,746 +1,368 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Garden Notepad — Zeli's Garden v5</title>
-  
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&family=Poppins:wght@300;400&family=Nunito:wght@400;700&family=Caveat:wght@400;700&family=Kalam&family=Patrick+Hand&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Picmo Emoji Picker -->
-  <script src="https://unpkg.com/picmo@latest/dist/umd/index.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Garden Notepad — Zeli's Garden v4 FIX</title>
 
-  <style>
-    :root{
-      --sky-1: #e6f9ff;
-      --sky-2: #cfeefd;
-      --green-1: #f0fbf2;
-      --green-2: #dff9e6;
-      --green-3: #8ecf9a;
-      --card: rgba(255,255,255,0.95);
-      --font-main: 'Quicksand', sans-serif;
-    }
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
-    html,body{height:100%; margin:0; font-family:'Quicksand',sans-serif; overflow: hidden;}
-    
-    body{
-      background: linear-gradient(180deg,var(--sky-1),var(--sky-2) 40%,var(--green-1) 60%,var(--green-2));
-      display:flex; flex-direction: column;
-    }
-
-    /* --- LIST VIEW --- */
-    .app {
-      width:100%; height:100%; position:relative; 
-      background: rgba(255,255,255,0.5); backdrop-filter: blur(5px);
-      display: flex; flex-direction: column;
-    }
-
-    .header{
-      flex: 0 0 80px; padding:0 20px; display:flex; align-items:center; gap:15px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.0));
-    }
-    .logo{
-      width:45px; height:45px; border-radius:12px; 
-      background: linear-gradient(135deg, var(--green-3), var(--green-2));
-      display:flex; align-items:center; justify-content:center; 
-      font-size:22px; color:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.1);
-    }
-    .title h1{ margin:0; font-size:18px; color:#333; }
-    .title p{ margin:0; color:#666; font-size:12px; }
-
-    .notes-list-view {
-      flex: 1; overflow-y: auto; padding: 20px;
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
-      padding-bottom: 80px;
-    }
-    
-    .note-card {
-      background: var(--card); border-radius: 16px; padding: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.03); cursor: pointer;
-      display: flex; flex-direction: column; height: 180px;
-      transition: all 0.2s; border: 1px solid rgba(255,255,255,0.5);
-      position: relative;
-    }
-    .note-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-    .note-card h3 { margin: 0 0 8px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .note-card .preview { font-size: 12px; color: #666; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; line-height: 1.4; }
-    
-    .add-btn-card {
-      border: 2px dashed var(--green-3); background: rgba(255,255,255,0.4);
-      color: var(--green-3); align-items: center; justify-content: center;
-      text-align: center; font-size: 14px;
-    }
-    .delete-card-btn {
-      position: absolute; top: 8px; right: 8px; border: none; background: #fff;
-      width: 24px; height: 24px; border-radius: 50%; color: #ff8888; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      z-index: 5;
-    }
-
-    /* --- EDITOR VIEW --- */
-    .editor-view {
-      position: fixed; inset: 0; background: #f4f9f4;
-      display: flex; flex-direction: column;
-      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 50;
-    }
-    .editor-view.active { transform: translateX(0); }
-
-    /* HEADER EDITOR (Title & Back) */
-    .editor-header-row {
-      flex: 0 0 50px; display: flex; align-items: center; gap: 10px; padding: 0 10px;
-      background: white; border-bottom: 1px solid #f0f0f0;
-    }
-    .back-btn { border: none; background: transparent; font-size: 18px; padding: 10px; cursor: pointer; color: #555; }
-    .note-title-input {
-      flex: 1; border: none; font-size: 16px; font-weight: 600; outline: none;
-      font-family: 'Quicksand', sans-serif; color: #333; background: transparent;
-    }
-    
-    /* TOOLBAR (Moved to Top) */
-    .editor-toolbar {
-      flex: 0 0 50px; display: flex; align-items: center; gap: 10px; padding: 0 15px;
-      background: #fafafa; border-bottom: 1px solid #ddd;
-      overflow-x: auto; white-space: nowrap;
-      scrollbar-width: none;
-    }
-    .editor-toolbar::-webkit-scrollbar { display: none; }
-
-    .tool-btn {
-      width: 36px; height: 36px; border-radius: 8px; border: 1px solid transparent;
-      background: white; color: #555; font-size: 14px; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
-    }
-    .tool-btn:hover { background: #eef9ee; color: var(--green-3); }
-    .tool-btn:active { transform: scale(0.95); }
-    .tool-btn.active { background: var(--green-3); color: white; border-color: var(--green-3); }
-
-    .tool-sep { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: inline-block; }
-
-    /* WORKSPACE */
-    .editor-workspace {
-      flex: 1; position: relative; overflow-y: auto; overflow-x: hidden;
-      display: flex; justify-content: center; 
-      background: #eef5ee; padding: 20px;
-    }
-
-    .paper-container {
-      width: 100%; height: auto; min-height: 100%;
-      position: relative;
-      background: #fffaf0;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.05);
-      border-radius: 8px;
-      max-width: 800px; /* A4 width approx */
-      overflow: hidden; 
-    }
-
-    .paper-pattern {
-      position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      background-image: repeating-linear-gradient(transparent, transparent 31px, rgba(0,0,0,0.05) 31px, rgba(0,0,0,0.05) 32px);
-      background-size: 100% 32px; margin-top: 30px;
-    }
-
-    .sticker-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-    .sticker-layer.front { z-index: 10; }
-    .sticker-layer.back { z-index: 1; }
-
-    .rich-editor {
-      position: relative; width: 100%; min-height: 80vh;
-      border: none; outline: none; padding: 30px 40px;
-      font-size: 16px; line-height: 2;
-      font-family: var(--font-main);
-      color: #333; background: transparent; z-index: 5;
-    }
-    .paper-container.arrange-mode .rich-editor { pointer-events: none; opacity: 0.6; }
-    .rich-editor img { max-width: 100%; border-radius: 8px; margin: 10px 0; }
-    .rich-editor blockquote { border-left: 4px solid var(--green-3); margin: 10px 0; padding-left: 10px; color: #666; font-style: italic; background: rgba(0,0,0,0.02); }
-
-    /* --- STICKER STYLES --- */
-    .sticker {
-      position: absolute; display: inline-flex; align-items: center; justify-content: center;
-      cursor: grab; user-select: none; touch-action: none; pointer-events: auto;
-      transform-origin: center;
-    }
-    .sticker img { pointer-events: none; width: 100%; height: 100%; object-fit: contain; }
-    .sticker-content { font-size: 40px; line-height: 1; pointer-events: none; }
-    
-    /* DESKTOP CONTROLS (Border & Handles) */
-    .sticker.selected {
-      border: 1px dashed #4D89FF;
-    }
-    .sticker-handle {
-      position: absolute; width: 12px; height: 12px;
-      background: #4D89FF; border-radius: 50%;
-      display: none; pointer-events: auto;
-    }
-    .sticker.selected .sticker-handle { display: block; }
-    
-    /* Handles Position */
-    .handle-resize { bottom: -6px; right: -6px; cursor: se-resize; }
-    .handle-rotate { top: -20px; left: 50%; transform: translateX(-50%); cursor: grab; background: #8ecf9a; }
-    .handle-delete { top: -6px; right: -6px; background: #ff6b6b; cursor: pointer; text-align:center; line-height:12px; color:white; font-size:8px; }
-
-    /* --- MEGA PANEL --- */
-    .mega-panel {
-      position: fixed; bottom: 0; left: 0; width: 100%; height: 60vh;
-      background: white; border-radius: 25px 25px 0 0;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-      z-index: 200; transform: translateY(110%);
-      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-      display: flex; flex-direction: column;
-    }
-    .mega-panel.open { transform: translateY(0); }
-
-    .panel-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .panel-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 10px 15px; border-bottom: 1px solid #eee; }
-    .tab-btn { padding: 8px 14px; border-radius: 20px; border: 1px solid #eee; background: white; font-size: 12px; cursor: pointer; white-space: nowrap; color: #555; }
-    .tab-btn.active { background: var(--green-2); border-color: var(--green-3); color: #2d5a35; font-weight: bold; }
-    .panel-content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
-
-    /* Image Sticker Grid */
-    .img-sticker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .img-sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; border-radius: 8px; border: 1px solid #eee; padding: 5px; }
-    .img-sticker-item:hover { background: #f0f0f0; }
-
-    .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-    .tool-item { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 15px 5px; background: #f8f9fa; border-radius: 12px; cursor: pointer; }
-
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .overlay.active { opacity: 1; pointer-events: auto; }
-    
-    #emojiContainer { width: 100%; height: 100%; }
-    .picmo__picker { width: 100% !important; border: none !important; }
-
-    @media(min-width: 600px) {
-      .mega-panel { width: 400px; left: 50%; transform: translate(-50%, 110%); height: 500px; border-radius: 15px; bottom: 20px; }
-      .mega-panel.open { transform: translate(-50%, 0); }
-    }
-  </style>
+<style>
+:root{
+  --green:#8ecf9a;
+  --paper:#fffaf0;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Quicksand',sans-serif;
+  background:linear-gradient(#e6f9ff,#dff9e6);
+  height:100vh;
+  overflow:hidden;
+}
+.app{height:100%;display:flex;flex-direction:column}
+.header{padding:15px;display:flex;gap:10px;align-items:center}
+.logo{background:var(--green);color:#fff;border-radius:10px;width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+.notes-list-view{
+  flex:1;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:15px;
+  padding:15px;
+  overflow:auto;
+}
+.note-card{
+  background:#fff;
+  border-radius:14px;
+  padding:12px;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,.05);
+  position:relative;
+}
+.add-btn-card{
+  border:2px dashed var(--green);
+  text-align:center;
+  color:var(--green);
+}
+.delete-card-btn{
+  position:absolute;
+  top:8px;
+  right:8px;
+  border:none;
+  background:#fff;
+  border-radius:50%;
+  cursor:pointer;
+}
+.editor-view{
+  position:fixed;
+  inset:0;
+  background:#eef5ee;
+  display:none;
+  flex-direction:column;
+}
+.editor-view.active{display:flex}
+.editor-topbar{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:10px;
+  background:#fff;
+}
+.note-title-input{
+  flex:1;
+  border:none;
+  font-size:18px;
+  outline:none;
+}
+.top-toolbar{
+  display:flex;
+  gap:8px;
+  padding:8px;
+  background:#fff;
+}
+.tool-btn{
+  width:38px;height:38px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+.editor-workspace{
+  flex:1;
+  overflow:auto;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+.paper{
+  background:var(--paper);
+  width:800px;
+  min-height:1100px;
+  padding:40px;
+  position:relative;
+}
+.rich-editor{
+  min-height:900px;
+  outline:none;
+}
+.sticker{
+  position:absolute;
+  cursor:grab;
+  font-size:40px;
+}
+.page-nav{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  gap:6px;
+  background:#fff;
+  padding:8px 12px;
+  border-radius:20px;
+}
+.page-btn{
+  width:34px;height:34px;
+  border-radius:50%;
+  border:1px solid #ccc;
+  background:#fff;
+  cursor:pointer;
+}
+.page-btn.active{
+  background:var(--green);
+  color:#fff;
+  border-color:var(--green);
+}
+</style>
 </head>
-<body>
 
+<body>
 <div class="app">
   <div class="header">
     <div class="logo">🌿</div>
-    <div class="title">
-      <h1>Zeli's Garden v5</h1>
-      <p>Estetika & Emosi</p>
+    <div>
+      <b>Zeli's Garden</b>
+      <div style="font-size:12px;color:#666">v4 FIX</div>
     </div>
   </div>
+
   <div class="notes-list-view" id="notesList"></div>
 </div>
 
-<!-- EDITOR SCREEN -->
 <div class="editor-view" id="editorView">
-  <!-- Top Row: Back, Title, Fullscreen -->
-  <div class="editor-header-row">
-    <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
-    <input type="text" class="note-title-input" id="noteTitle" placeholder="Judul Catatan..." />
-    <div id="saveIndicator" style="font-size:11px; color:var(--green-3); font-weight:600; margin-right:10px;"></div>
-    <button class="tool-btn" onclick="toggleFullScreen()"><i class="fas fa-expand"></i></button>
+  <div class="editor-topbar">
+    <button class="tool-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
+    <input id="noteTitle" class="note-title-input" placeholder="Judul...">
+    <span id="saveIndicator" style="font-size:11px;color:var(--green)"></span>
   </div>
 
-  <!-- Toolbar Row (Fixed Top) -->
-  <div class="editor-toolbar">
-    <button class="tool-btn active" id="modeBtn" onclick="toggleEditMode()" title="Mode Tulis/Atur"><i class="fas fa-pen"></i></button>
-    <div class="tool-sep"></div>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="openPanel('stickers')"><i class="far fa-smile"></i></button>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="openPanel('images')"><i class="far fa-image"></i></button>
-    <div class="tool-sep"></div>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('undo')"><i class="fas fa-undo"></i></button>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('redo')"><i class="fas fa-redo"></i></button>
-    <div class="tool-sep"></div>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('bold')"><i class="fas fa-bold"></i></button>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('italic')"><i class="fas fa-italic"></i></button>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="insertCheckbox()"><i class="far fa-check-square"></i></button>
-    <button class="tool-btn" onmousedown="evtPd(event)" onclick="openPanel('style')"><i class="fas fa-font"></i></button>
-    <button class="tool-btn menu-trigger" onclick="openPanel('format')" style="background:#333; color:white;"><i class="fas fa-bars"></i></button>
+  <div class="top-toolbar">
+    <button class="tool-btn" onclick="execCmd('bold')"><i class="fas fa-bold"></i></button>
+    <button class="tool-btn" onclick="execCmd('italic')"><i class="fas fa-italic"></i></button>
+    <button class="tool-btn" onclick="addSticker('🌸')">🌸</button>
+    <button class="tool-btn" onclick="addSticker('🦋')">🦋</button>
   </div>
 
   <div class="editor-workspace">
-    <div class="paper-container" id="paperContainer">
-      <div class="paper-pattern" id="paperPattern"></div>
-      <div class="sticker-layer back" id="stickerLayerBack"></div>
-      <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="false" placeholder="Tulis ceritamu di sini..."></div>
-      <div class="sticker-layer front" id="stickerLayerFront"></div>
+    <div class="paper" id="paper">
+      <div id="editor" class="rich-editor" contenteditable="true"></div>
     </div>
   </div>
-</div>
 
-<div class="overlay" id="overlay"></div>
-
-<!-- MEGA PANEL -->
-<div class="mega-panel" id="megaPanel">
-  <div class="panel-header">
-    <h3>Tools</h3>
-    <button id="closePanel" style="border:none;background:none;font-size:24px;">&times;</button>
-  </div>
-  
-  <div class="panel-tabs">
-    <button class="tab-btn active" data-tab="stickers" onmousedown="evtPd(event)">Emoji</button>
-    <button class="tab-btn" data-tab="images" onmousedown="evtPd(event)">Stiker 2</button>
-    <button class="tab-btn" data-tab="style" onmousedown="evtPd(event)">Gaya</button>
-    <button class="tab-btn" data-tab="format" onmousedown="evtPd(event)">Format</button>
-    <button class="tab-btn" data-tab="paper" onmousedown="evtPd(event)">Kertas</button>
-  </div>
-
-  <div class="panel-content" id="panelContent"></div>
+  <div class="page-nav" id="pageNav"></div>
 </div>
 
 <script>
-  // --- HELPERS ---
-  const $ = id => document.getElementById(id);
-  const evtPd = e => e.preventDefault();
-  
-  // --- STATE ---
-  const NOTES_KEY = 'zeli_garden_v5_final';
-  let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
-  let currentNote = null;
-  let isNewNote = false;
-  let isArrangeMode = false;
-  let selectedSticker = null;
-  let savedRange = null; 
-  let emojiPicker = null; 
+/* =======================
+   STATE
+======================= */
+const NOTES_KEY='zeli_garden_v4_fixed';
+let notes=JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+let currentNote=null;
+let currentPage=1;
 
-  // --- IMAGE STICKER API (Mockup List) ---
-  // Menggunakan URL gambar statis yang lucu/estetik (bebas lisensi/cdn umum)
-  const STICKER_PACK = [
-    'https://cdn-icons-png.flaticon.com/512/4193/4193259.png', // Cat
-    'https://cdn-icons-png.flaticon.com/512/4193/4193305.png', // Plant
-    'https://cdn-icons-png.flaticon.com/512/4193/4193245.png', // Coffee
-    'https://cdn-icons-png.flaticon.com/512/9445/9445672.png', // Flower
-    'https://cdn-icons-png.flaticon.com/512/2919/2919736.png', // Heart
-    'https://cdn-icons-png.flaticon.com/512/1868/1868178.png', // Sun
-    'https://cdn-icons-png.flaticon.com/512/2550/2550269.png', // Cloud
-    'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', // Moon
-    'https://cdn-icons-png.flaticon.com/512/740/740935.png',   // Star
-    'https://cdn-icons-png.flaticon.com/512/2663/2663067.png', // Book
-    'https://cdn-icons-png.flaticon.com/512/869/869869.png',   // Tea
-    'https://cdn-icons-png.flaticon.com/512/2415/2415330.png'  // Camera
-  ];
+/* =======================
+   HELPERS
+======================= */
+const $=id=>document.getElementById(id);
 
-  // --- ELEMENTS ---
-  const el = {
-    list: $('notesList'), editorView: $('editorView'), 
-    editor: $('richEditor'), title: $('noteTitle'),
-    paper: $('paperContainer'), pattern: $('paperPattern'),
-    layerBack: $('stickerLayerBack'), layerFront: $('stickerLayerFront'),
-    panel: $('megaPanel'), panelContent: $('panelContent'), overlay: $('overlay')
-  };
+/* =======================
+   LIST
+======================= */
+function renderList(){
+  const list=$('notesList');
+  list.innerHTML='';
+  const add=document.createElement('div');
+  add.className='note-card add-btn-card';
+  add.innerHTML='<b>＋ New Note</b>';
+  add.onclick=createNote;
+  list.appendChild(add);
 
-  // --- INIT ---
-  window.addEventListener('DOMContentLoaded', () => {
-    renderList();
-    initListeners();
-  });
-
-  function initListeners() {
-    $('backBtn').addEventListener('click', closeEditor);
-    el.editor.addEventListener('input', debounce(autoSave, 1000));
-    el.title.addEventListener('input', debounce(autoSave, 1000));
-    
-    // Save Cursor Position
-    ['keyup', 'mouseup', 'touchend', 'input', 'blur'].forEach(ev => {
-      el.editor.addEventListener(ev, saveSelection);
-    });
-
-    $('closePanel').addEventListener('click', closePanel);
-    el.overlay.addEventListener('click', closePanel);
-    
-    // Panel Tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        renderPanel(e.target.dataset.tab);
-      });
-    });
-
-    // Deselect Logic (Desktop & Mobile)
-    el.paper.addEventListener('mousedown', (e) => {
-      if(e.target === el.paper || e.target === el.editor) deselectSticker();
-    });
-  }
-
-  // --- CORE FUNCTIONS ---
-  function renderList() {
-    el.list.innerHTML = '';
-    const addCard = document.createElement('div');
-    addCard.className = 'note-card add-btn-card';
-    addCard.innerHTML = '<i class="fas fa-plus" style="font-size:30px; margin-bottom:10px;"></i><br>Catatan Baru';
-    addCard.onclick = createNote;
-    el.list.appendChild(addCard);
-
-    notes.forEach(note => {
-      const card = document.createElement('div');
-      card.className = 'note-card';
-      const prevDiv = document.createElement('div');
-      prevDiv.innerHTML = note.content;
-      const preview = prevDiv.textContent.substring(0, 100) || 'Kosong...';
-      
-      card.innerHTML = `
-        <h3>${note.title || 'Tanpa Judul'}</h3>
-        <div class="preview">${preview}</div>
-        <button class="delete-card-btn" onclick="deleteNote('${note.id}', event)"><i class="fas fa-times"></i></button>
-      `;
-      card.onclick = (e) => { if(!e.target.closest('.delete-card-btn')) openNote(note.id); };
-      el.list.appendChild(card);
-    });
-  }
-
-  function createNote() {
-    isNewNote = true;
-    currentNote = {
-      id: Date.now().toString(), title: '', content: '', stickers: [],
-      theme: 'default', paper: 'lines', createdAt: Date.now()
-    };
-    loadNoteData();
-    isArrangeMode = true; toggleEditMode();
-    el.editorView.classList.add('active');
-  }
-
-  function openNote(id) {
-    isNewNote = false;
-    currentNote = notes.find(n => n.id === id);
-    if(!currentNote) return;
-    loadNoteData();
-    isArrangeMode = true; toggleEditMode();
-    el.editorView.classList.add('active');
-  }
-
-  function loadNoteData() {
-    el.title.value = currentNote.title;
-    el.editor.innerHTML = currentNote.content;
-    applyTheme(currentNote.theme, false);
-    applyPaper(currentNote.paper);
-    el.layerBack.innerHTML = ''; el.layerFront.innerHTML = '';
-    (currentNote.stickers || []).forEach(renderSticker);
-    savedRange = null;
-  }
-
-  function autoSave() {
-    // Auto Title
-    if(!el.title.value.trim() && el.editor.innerText.trim()) {
-      currentNote.title = el.editor.innerText.trim().split(/\s+/).slice(0, 4).join(' ');
-    } else {
-      currentNote.title = el.title.value;
-    }
-
-    currentNote.content = el.editor.innerHTML;
-    currentNote.stickers = getStickersData();
-    
-    const idx = notes.findIndex(n => n.id === currentNote.id);
-    if(idx > -1) notes[idx] = currentNote;
-    else { notes.unshift(currentNote); isNewNote = false; }
-    
-    // PERMANENT STORAGE
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    $('saveIndicator').innerText = 'Disimpan ✓';
-    setTimeout(() => $('saveIndicator').innerText = '', 2000);
-  }
-
-  function closeEditor() {
-    if(!el.title.value.trim() && !el.editor.textContent.trim()) {
-       notes = notes.filter(n => n.id !== currentNote.id);
-       localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    } else autoSave();
-    el.editorView.classList.remove('active');
-    renderList();
-  }
-
-  function deleteNote(id, e) {
-    e.stopPropagation();
-    if(confirm('Hapus?')) {
-      notes = notes.filter(n => n.id !== id);
-      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-      renderList();
-    }
-  }
-
-  // --- EDITOR UTILS ---
-  function saveSelection() {
-    if(isArrangeMode) return;
-    const sel = window.getSelection();
-    if(sel.rangeCount > 0 && el.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
-      savedRange = sel.getRangeAt(0);
-    }
-  }
-
-  function restoreSelection() {
-    el.editor.focus();
-    if(savedRange) {
-      const sel = window.getSelection();
-      sel.removeAllRanges(); sel.addRange(savedRange);
-    } else {
-      const range = document.createRange();
-      range.selectNodeContents(el.editor); range.collapse(false);
-      const sel = window.getSelection();
-      sel.removeAllRanges(); sel.addRange(range);
-    }
-  }
-
-  function execCmd(cmd, val=null) {
-    restoreSelection(); document.execCommand(cmd, false, val); saveSelection(); autoSave();
-  }
-
-  function toggleEditMode() {
-    isArrangeMode = !isArrangeMode;
-    const btn = $('modeBtn');
-    if(isArrangeMode) {
-      el.paper.classList.add('arrange-mode'); el.editor.contentEditable = false;
-      btn.innerHTML = '<i class="fas fa-hand-pointer"></i>'; btn.classList.remove('active');
-    } else {
-      el.paper.classList.remove('arrange-mode'); el.editor.contentEditable = true;
-      btn.innerHTML = '<i class="fas fa-pen"></i>'; btn.classList.add('active');
-      restoreSelection();
-    }
-  }
-
-  function toggleFullScreen() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
-  }
-
-  function insertCheckbox() {
-    restoreSelection();
-    document.execCommand('insertHTML', false, '<input type="checkbox" style="vertical-align:middle; margin-right:5px;">&nbsp;');
-  }
-
-  // --- STICKER ENGINE (Unified Text/Image) ---
-  function addSticker(content, type = 'text') {
-    const s = { id: 's'+Date.now(), content, type, x: 100, y: 100, rot: 0, scale: 1, layer: 'front' };
-    renderSticker(s); autoSave();
-    // Don't close panel immediately for multi-add
-  }
-
-  function renderSticker(data) {
-    const ele = document.createElement('div');
-    ele.className = 'sticker'; ele.id = data.id;
-    ele.style.left = data.x + 'px'; ele.style.top = data.y + 'px';
-    ele.style.transform = `rotate(${data.rot}deg) scale(${data.scale})`;
-    ele.dataset.content = data.content; ele.dataset.type = data.type;
-    ele.dataset.rot = data.rot; ele.dataset.scale = data.scale; ele.dataset.layer = data.layer;
-    
-    // HTML Content based on type
-    let innerHTML = '';
-    if(data.type === 'image') {
-       innerHTML = `<img src="${data.content}" draggable="false" />`;
-       ele.style.width = '100px'; // base width for images
-    } else {
-       innerHTML = `<div class="sticker-content">${data.content}</div>`;
-    }
-
-    // Controls for Desktop (Handles)
-    ele.innerHTML = `
-      ${innerHTML}
-      <div class="sticker-handle handle-resize"></div>
-      <div class="sticker-handle handle-rotate"></div>
-      <div class="sticker-handle handle-delete">x</div>
+  notes.forEach(n=>{
+    const c=document.createElement('div');
+    c.className='note-card';
+    c.innerHTML=`
+      <b>${n.title||'Tanpa Judul'}</b>
+      <div style="font-size:12px;color:#666">${new Date(n.updatedAt).toLocaleDateString()}</div>
+      <button class="delete-card-btn"><i class="fas fa-times"></i></button>
     `;
-
-    const parent = data.layer === 'back' ? el.layerBack : el.layerFront;
-    parent.appendChild(ele);
-    attachStickerEvents(ele);
-  }
-
-  function attachStickerEvents(ele) {
-    // --- MOUSE & TOUCH LOGIC ---
-    let startX, startY, startRot, startScale, startAngle;
-    
-    // Selection Logic
-    ele.addEventListener('mousedown', e => { e.stopPropagation(); selectSticker(ele); });
-    ele.addEventListener('touchstart', e => { e.stopPropagation(); selectSticker(ele); });
-
-    // 1. DRAG (Content)
-    const onDragStart = (e) => {
-      if(e.target.classList.contains('sticker-handle')) return; // Ignore handles
-      e.preventDefault();
-      const p = e.type.includes('mouse') ? e : e.touches[0];
-      startX = p.clientX; startY = p.clientY;
-      ele.dataset.sx = ele.offsetLeft; ele.dataset.sy = ele.offsetTop;
-      
-      const move = (ev) => {
-        const pp = ev.type.includes('mouse') ? ev : ev.touches[0];
-        ele.style.left = (parseFloat(ele.dataset.sx) + (pp.clientX - startX)) + 'px';
-        ele.style.top = (parseFloat(ele.dataset.sy) + (pp.clientY - startY)) + 'px';
-      };
-      const stop = () => {
-         document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop);
-         document.removeEventListener('touchmove', move); document.removeEventListener('touchend', stop);
-         autoSave();
-      };
-      document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
-      document.addEventListener('touchmove', move); document.addEventListener('touchend', stop);
+    c.onclick=()=>openNote(n.id);
+    c.querySelector('button').onclick=e=>{
+      e.stopPropagation();
+      deleteNote(n.id);
     };
-    ele.addEventListener('mousedown', onDragStart);
-    ele.addEventListener('touchstart', onDragStart);
+    list.appendChild(c);
+  });
+}
 
-    // 2. RESIZE (Handle)
-    const resizeHandle = ele.querySelector('.handle-resize');
-    const onResizeStart = (e) => {
-      e.stopPropagation(); e.preventDefault();
-      const rect = ele.getBoundingClientRect();
-      const center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-      startScale = parseFloat(ele.dataset.scale);
-      const p = e.type.includes('mouse') ? e : e.touches[0];
-      const startDist = Math.hypot(p.clientX - center.x, p.clientY - center.y);
+/* =======================
+   NOTE CRUD
+======================= */
+function createNote(){
+  currentNote={
+    id:Date.now().toString(),
+    title:'',
+    pages:1,
+    content:{1:''},
+    stickers:[],
+    updatedAt:Date.now()
+  };
+  openEditor();
+}
 
-      const move = (ev) => {
-        const pp = ev.type.includes('mouse') ? ev : ev.touches[0];
-        const dist = Math.hypot(pp.clientX - center.x, pp.clientY - center.y);
-        const newScale = Math.max(0.2, startScale * (dist / startDist));
-        ele.style.transform = `rotate(${ele.dataset.rot}deg) scale(${newScale})`;
-        ele.dataset.scale = newScale;
-      };
-      const stop = () => {
-         document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop);
-         document.removeEventListener('touchmove', move); document.removeEventListener('touchend', stop);
-         autoSave();
-      };
-      document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
-      document.addEventListener('touchmove', move); document.addEventListener('touchend', stop);
+function openNote(id){
+  currentNote=notes.find(n=>n.id===id);
+  openEditor();
+}
+
+function deleteNote(id){
+  if(confirm('Hapus catatan?')){
+    notes=notes.filter(n=>n.id!==id);
+    saveNotes();
+    renderList();
+  }
+}
+
+/* =======================
+   EDITOR
+======================= */
+function openEditor(){
+  $('editorView').classList.add('active');
+  $('noteTitle').value=currentNote.title||'';
+  currentPage=1;
+  loadPage();
+  updatePageNav();
+}
+
+$('backBtn').onclick=()=>{
+  savePage();
+  saveNote();
+  $('editorView').classList.remove('active');
+  renderList();
+};
+
+$('editor').addEventListener('input',()=>{
+  savePage();
+  autoSave();
+});
+
+$('noteTitle').addEventListener('input',autoSave);
+
+function execCmd(cmd){
+  document.execCommand(cmd);
+}
+
+/* =======================
+   PAGE SYSTEM
+======================= */
+function loadPage(){
+  $('editor').innerHTML=currentNote.content[currentPage]||'';
+  document.querySelectorAll('.sticker').forEach(s=>{
+    s.style.display=(+s.dataset.page===currentPage)?'block':'none';
+  });
+}
+
+function savePage(){
+  currentNote.content[currentPage]=$('editor').innerHTML;
+}
+
+function updatePageNav(){
+  const nav=$('pageNav');
+  nav.innerHTML='';
+  for(let i=1;i<=currentNote.pages;i++){
+    const b=document.createElement('button');
+    b.className='page-btn'+(i===currentPage?' active':'');
+    b.textContent=i;
+    b.onclick=()=>{
+      savePage();
+      currentPage=i;
+      loadPage();
+      updatePageNav();
     };
-    resizeHandle.addEventListener('mousedown', onResizeStart);
-    resizeHandle.addEventListener('touchstart', onResizeStart);
+    nav.appendChild(b);
+  }
+  const add=document.createElement('button');
+  add.className='page-btn';
+  add.innerHTML='＋';
+  add.onclick=()=>{
+    savePage();
+    currentNote.pages++;
+    currentPage=currentNote.pages;
+    currentNote.content[currentPage]='';
+    updatePageNav();
+    loadPage();
+  };
+  nav.appendChild(add);
+}
 
-    // 3. ROTATE (Handle)
-    const rotHandle = ele.querySelector('.handle-rotate');
-    const onRotStart = (e) => {
-      e.stopPropagation(); e.preventDefault();
-      const rect = ele.getBoundingClientRect();
-      const center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-      const p = e.type.includes('mouse') ? e : e.touches[0];
-      startAngle = Math.atan2(p.clientY - center.y, p.clientX - center.x);
-      startRot = parseFloat(ele.dataset.rot);
+/* =======================
+   STICKERS
+======================= */
+function addSticker(emoji){
+  const s=document.createElement('div');
+  s.className='sticker';
+  s.textContent=emoji;
+  s.style.left='100px';
+  s.style.top='100px';
+  s.dataset.page=currentPage;
+  $('paper').appendChild(s);
 
-      const move = (ev) => {
-        const pp = ev.type.includes('mouse') ? ev : ev.touches[0];
-        const angle = Math.atan2(pp.clientY - center.y, pp.clientX - center.x);
-        const deg = (angle - startAngle) * (180/Math.PI);
-        const newRot = startRot + deg;
-        ele.style.transform = `rotate(${newRot}deg) scale(${ele.dataset.scale})`;
-        ele.dataset.rot = newRot;
-      };
-      const stop = () => {
-         document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop);
-         document.removeEventListener('touchmove', move); document.removeEventListener('touchend', stop);
-         autoSave();
-      };
-      document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
-      document.addEventListener('touchmove', move); document.addEventListener('touchend', stop);
+  let ox,oy;
+  s.onmousedown=e=>{
+    ox=e.offsetX; oy=e.offsetY;
+    document.onmousemove=m=>{
+      s.style.left=m.pageX-ox+'px';
+      s.style.top=m.pageY-oy+'px';
     };
-    rotHandle.addEventListener('mousedown', onRotStart);
-    rotHandle.addEventListener('touchstart', onRotStart);
+    document.onmouseup=()=>document.onmousemove=null;
+  };
+}
 
-    // 4. DELETE
-    ele.querySelector('.handle-delete').addEventListener('click', (e) => {
-      e.stopPropagation(); ele.remove(); autoSave();
-    });
-  }
+/* =======================
+   SAVE
+======================= */
+function autoSave(){
+  currentNote.updatedAt=Date.now();
+  $('saveIndicator').textContent='disimpan...';
+  setTimeout(()=>$('saveIndicator').textContent='',800);
+}
 
-  function selectSticker(ele) {
-    if(selectedSticker) selectedSticker.classList.remove('selected');
-    selectedSticker = ele; ele.classList.add('selected');
-  }
-  function deselectSticker() {
-    if(selectedSticker) { selectedSticker.classList.remove('selected'); selectedSticker = null; }
-  }
+function saveNote(){
+  savePage();
+  currentNote.title=$('noteTitle').value;
+  const i=notes.findIndex(n=>n.id===currentNote.id);
+  if(i>-1) notes[i]=currentNote;
+  else notes.unshift(currentNote);
+  saveNotes();
+}
 
-  function getStickersData() {
-    const arr = [];
-    [el.layerBack, el.layerFront].forEach(layer => {
-      Array.from(layer.children).forEach(ele => {
-        arr.push({ 
-          id: ele.id, content: ele.dataset.content, type: ele.dataset.type,
-          x: parseFloat(ele.style.left), y: parseFloat(ele.style.top), 
-          rot: parseFloat(ele.dataset.rot), scale: parseFloat(ele.dataset.scale), 
-          layer: ele.dataset.layer 
-        });
-      });
-    });
-    return arr;
-  }
+function saveNotes(){
+  localStorage.setItem(NOTES_KEY,JSON.stringify(notes));
+}
 
-  // --- PANELS & THEMES ---
-  function openPanel(tab) {
-    saveSelection();
-    el.panel.classList.add('open'); el.overlay.classList.add('active');
-    document.querySelector(`.tab-btn[data-tab="${tab}"]`).click();
-  }
-  function closePanel() {
-    el.panel.classList.remove('open'); el.overlay.classList.remove('active');
-    if(!isArrangeMode) restoreSelection();
-  }
-
-  function renderPanel(tab) {
-    el.panelContent.innerHTML = '';
-
-    if(tab === 'stickers') {
-      const container = document.createElement('div'); container.id = 'emojiContainer';
-      el.panelContent.appendChild(container);
-      if(!emojiPicker) {
-        emojiPicker = picmo.createPicker({ rootElement: container, native: true });
-        emojiPicker.addEventListener('emoji:select', s => addSticker(s.emoji, 'text'));
-      } else {
-        container.innerHTML = ''; emojiPicker = picmo.createPicker({ rootElement: container, native: true });
-        emojiPicker.addEventListener('emoji:select', s => addSticker(s.emoji, 'text'));
-      }
-    } 
-    else if(tab === 'images') {
-      // API STICKER MOCKUP (Image Grid)
-      let html = '<div class="img-sticker-grid">';
-      STICKER_PACK.forEach(url => {
-        html += `<img src="${url}" class="img-sticker-item" onclick="addSticker('${url}', 'image')">`;
-      });
-      html += '</div><p style="text-align:center;font-size:11px;color:#999;margin-top:10px;">Gambar dari Flaticon (API Simulation)</p>';
-      el.panelContent.innerHTML = html;
-    }
-    else if(tab === 'style') {
-      const fonts = ['Quicksand', 'Caveat', 'Patrick Hand', 'Kalam'];
-      let h = `<div class="tool-grid">`;
-      fonts.forEach(f => h += `<div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('fontName', '${f}')" style="font-family:${f}">Aa<br><span>${f}</span></div>`);
-      h += `</div>`;
-      el.panelContent.innerHTML = h;
-    }
-    else if(tab === 'format') {
-       el.panelContent.innerHTML = `
-        <div class="tool-grid">
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('justifyLeft')"><i class="fas fa-align-left"></i><span>Kiri</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('justifyCenter')"><i class="fas fa-align-center"></i><span>Tengah</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i><span>List</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertHorizontalRule')"><i class="fas fa-minus"></i><span>Garis</span></div>
-        </div>`;
-    }
-    else if(tab === 'paper') {
-       el.panelContent.innerHTML = `
-        <div class="tool-grid">
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('lines')"><i class="fas fa-bars"></i><span>Garis</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('grid')"><i class="fas fa-border-all"></i><span>Kotak</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('plain')"><i class="far fa-file"></i><span>Polos</span></div>
-        </div>`;
-    }
-  }
-
-  function applyTheme(id, save=true) {
-    if(save) { currentNote.theme = id; autoSave(); }
-    const t = { 'default': { bg:'#fffaf0', col:'#333', font:'Quicksand'} }[id] || {bg:'#fffaf0'};
-    el.paper.style.backgroundColor = t.bg; el.editor.style.color = t.col;
-  }
-  function applyPaper(type) {
-    currentNote.paper = type;
-    const c = 'rgba(0,0,0,0.05)';
-    let bg = type === 'lines' ? `repeating-linear-gradient(transparent, transparent 31px, ${c} 31px, ${c} 32px)` :
-             type === 'grid' ? `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)` : '';
-    el.pattern.style.backgroundImage = bg;
-    el.pattern.style.backgroundSize = type === 'grid' ? '20px 20px' : '100% 32px';
-    autoSave();
-  }
-
-  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }}
+/* =======================
+   INIT
+======================= */
+renderList();
 </script>
 </body>
 </html>
