@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Garden Notepad — Zeli's Garden</title>
+  <title>Garden Notepad — Zeli's Garden v5</title>
   
-  <!-- Fonts Google -->
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&family=Poppins:wght@300;400&family=Nunito:wght@400;700&family=Baloo+2&family=Comic+Neue&family=Inter:wght@300;400&family=Caveat:wght@400;700&family=Kalam&family=Gloria+Hallelujah&family=Reenie+Beanie&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&family=Poppins:wght@300;400&family=Nunito:wght@400;700&family=Caveat:wght@400;700&family=Kalam&family=Patrick+Hand&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Picmo Emoji Picker CDN -->
+  <!-- Picmo Emoji Picker -->
   <script src="https://unpkg.com/picmo@latest/dist/umd/index.js"></script>
 
   <style>
@@ -19,20 +19,13 @@
       --green-1: #f0fbf2;
       --green-2: #dff9e6;
       --green-3: #8ecf9a;
-      --accent: #ffd6e0;
       --card: rgba(255,255,255,0.95);
-      --muted: #6b6b6b;
-      
-      /* Editor Vars */
-      --paper-bg: #fffaf0;
-      --paper-line: rgba(0,0,0,0.05);
       --font-main: 'Quicksand', sans-serif;
-      --text-color: #333;
     }
 
     *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
     html,body{height:100%; margin:0; font-family:'Quicksand',sans-serif; overflow: hidden;}
-
+    
     body{
       background: linear-gradient(180deg,var(--sky-1),var(--sky-2) 40%,var(--green-1) 60%,var(--green-2));
       display:flex; flex-direction: column;
@@ -56,7 +49,7 @@
       font-size:22px; color:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.1);
     }
     .title h1{ margin:0; font-size:18px; color:#333; }
-    .title p{ margin:0; color:var(--muted); font-size:12px; }
+    .title p{ margin:0; color:#666; font-size:12px; }
 
     .notes-list-view {
       flex: 1; overflow-y: auto; padding: 20px;
@@ -64,10 +57,6 @@
       padding-bottom: 80px;
     }
     
-    @media(min-width: 768px) {
-      .notes-list-view { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-    }
-
     .note-card {
       background: var(--card); border-radius: 16px; padding: 15px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.03); cursor: pointer;
@@ -78,7 +67,6 @@
     .note-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
     .note-card h3 { margin: 0 0 8px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .note-card .preview { font-size: 12px; color: #666; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; line-height: 1.4; }
-    .note-card .meta { font-size: 10px; color: #999; margin-top: 10px; display: flex; justify-content: space-between; }
     
     .add-btn-card {
       border: 2px dashed var(--green-3); background: rgba(255,255,255,0.4);
@@ -101,42 +89,59 @@
     }
     .editor-view.active { transform: translateX(0); }
 
-    .editor-topbar {
-      flex: 0 0 60px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
-      background: white; border-bottom: 1px solid #eee; z-index: 20;
+    /* HEADER EDITOR (Title & Back) */
+    .editor-header-row {
+      flex: 0 0 50px; display: flex; align-items: center; gap: 10px; padding: 0 10px;
+      background: white; border-bottom: 1px solid #f0f0f0;
     }
     .back-btn { border: none; background: transparent; font-size: 18px; padding: 10px; cursor: pointer; color: #555; }
     .note-title-input {
-      flex: 1; border: none; font-size: 18px; font-weight: 600; outline: none;
+      flex: 1; border: none; font-size: 16px; font-weight: 600; outline: none;
       font-family: 'Quicksand', sans-serif; color: #333; background: transparent;
     }
+    
+    /* TOOLBAR (Moved to Top) */
+    .editor-toolbar {
+      flex: 0 0 50px; display: flex; align-items: center; gap: 10px; padding: 0 15px;
+      background: #fafafa; border-bottom: 1px solid #ddd;
+      overflow-x: auto; white-space: nowrap;
+      scrollbar-width: none;
+    }
+    .editor-toolbar::-webkit-scrollbar { display: none; }
 
-    /* Workspace & Paper */
+    .tool-btn {
+      width: 36px; height: 36px; border-radius: 8px; border: 1px solid transparent;
+      background: white; color: #555; font-size: 14px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
+    }
+    .tool-btn:hover { background: #eef9ee; color: var(--green-3); }
+    .tool-btn:active { transform: scale(0.95); }
+    .tool-btn.active { background: var(--green-3); color: white; border-color: var(--green-3); }
+
+    .tool-sep { width: 1px; height: 20px; background: #ddd; margin: 0 5px; display: inline-block; }
+
+    /* WORKSPACE */
     .editor-workspace {
       flex: 1; position: relative; overflow-y: auto; overflow-x: hidden;
       display: flex; justify-content: center; 
-      background: #eef5ee;
-      padding: 20px;
-      /* PENTING: Padding bawah agar teks tidak tertutup toolbar */
-      padding-bottom: 100px; 
+      background: #eef5ee; padding: 20px;
     }
 
     .paper-container {
       width: 100%; height: auto; min-height: 100%;
       position: relative;
-      background: var(--paper-bg);
+      background: #fffaf0;
       box-shadow: 0 5px 25px rgba(0,0,0,0.05);
       border-radius: 8px;
-      /* Desktop Style A4 look */
-      max-width: 800px;
-      overflow: hidden; /* Contains stickers inside paper */
+      max-width: 800px; /* A4 width approx */
+      overflow: hidden; 
     }
 
     .paper-pattern {
       position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      background-image: repeating-linear-gradient(transparent, transparent 31px, var(--paper-line) 31px, var(--paper-line) 32px);
-      background-size: 100% 32px;
-      margin-top: 30px;
+      background-image: repeating-linear-gradient(transparent, transparent 31px, rgba(0,0,0,0.05) 31px, rgba(0,0,0,0.05) 32px);
+      background-size: 100% 32px; margin-top: 30px;
     }
 
     .sticker-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -148,78 +153,36 @@
       border: none; outline: none; padding: 30px 40px;
       font-size: 16px; line-height: 2;
       font-family: var(--font-main);
-      color: var(--text-color);
-      background: transparent;
-      z-index: 5;
+      color: #333; background: transparent; z-index: 5;
     }
-    
     .paper-container.arrange-mode .rich-editor { pointer-events: none; opacity: 0.6; }
+    .rich-editor img { max-width: 100%; border-radius: 8px; margin: 10px 0; }
+    .rich-editor blockquote { border-left: 4px solid var(--green-3); margin: 10px 0; padding-left: 10px; color: #666; font-style: italic; background: rgba(0,0,0,0.02); }
 
-    .rich-editor img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 10px 0; }
-    .rich-editor blockquote { 
-      border-left: 4px solid var(--green-3); margin: 10px 0; padding-left: 10px; 
-      color: #666; font-style: italic; background: rgba(0,0,0,0.02); 
-    }
-    .highlight-pastel { background: #ffd6e0; border-radius: 4px; padding: 0 4px; }
-
-    /* --- STICKERS --- */
+    /* --- STICKER STYLES --- */
     .sticker {
       position: absolute; display: inline-flex; align-items: center; justify-content: center;
       cursor: grab; user-select: none; touch-action: none; pointer-events: auto;
       transform-origin: center;
     }
-    .sticker:active { cursor: grabbing; }
+    .sticker img { pointer-events: none; width: 100%; height: 100%; object-fit: contain; }
     .sticker-content { font-size: 40px; line-height: 1; pointer-events: none; }
     
-    /* Control Handles (Only visible on Desktop or when selected) */
-    .sticker-controls {
-      position: absolute; inset: -15px; border: 2px dashed #8ecf9a; border-radius: 8px;
-      display: none; pointer-events: none;
+    /* DESKTOP CONTROLS (Border & Handles) */
+    .sticker.selected {
+      border: 1px dashed #4D89FF;
     }
-    .sticker.selected .sticker-controls { display: block; }
+    .sticker-handle {
+      position: absolute; width: 12px; height: 12px;
+      background: #4D89FF; border-radius: 50%;
+      display: none; pointer-events: auto;
+    }
+    .sticker.selected .sticker-handle { display: block; }
     
-    .ctrl-btn {
-      position: absolute; width: 32px; height: 32px; background: white; border: 1px solid #ddd;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; color: #555; pointer-events: auto; cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
-    }
-    .ctrl-del { top: -16px; right: -16px; color: #ff6b6b; }
-    .ctrl-layer { bottom: -16px; left: -16px; color: #4D89FF; }
-
-    /* --- TOOLBAR OPTIMIZATION --- */
-    .toolbar-container {
-      position: absolute; bottom: 0; left: 0; width: 100%;
-      background: rgba(255,255,255,0.95);
-      border-top: 1px solid #eee;
-      padding: 10px 15px;
-      display: flex; align-items: center; justify-content: space-between;
-      backdrop-filter: blur(10px);
-      z-index: 100;
-      box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
-    }
-    
-    .scroll-tools {
-      display: flex; align-items: center; gap: 15px; overflow-x: auto;
-      padding-right: 15px; flex: 1; scrollbar-width: none;
-    }
-    .scroll-tools::-webkit-scrollbar { display: none; }
-
-    .tool-btn {
-      flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px;
-      border: none; background: #f4f6f4; color: #555;
-      font-size: 16px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: 0.2s;
-    }
-    .tool-btn:active { transform: scale(0.9); }
-    .tool-btn.active { background: var(--green-3); color: white; }
-    
-    /* Tombol Mega Menu (Kotak) */
-    .menu-trigger {
-      flex: 0 0 auto; width: 45px; height: 45px; border-radius: 14px;
-      background: #333; color: white; border: none; font-size: 20px;
-      margin-left: 10px; cursor: pointer;
-    }
+    /* Handles Position */
+    .handle-resize { bottom: -6px; right: -6px; cursor: se-resize; }
+    .handle-rotate { top: -20px; left: 50%; transform: translateX(-50%); cursor: grab; background: #8ecf9a; }
+    .handle-delete { top: -6px; right: -6px; background: #ff6b6b; cursor: pointer; text-align:center; line-height:12px; color:white; font-size:8px; }
 
     /* --- MEGA PANEL --- */
     .mega-panel {
@@ -232,54 +195,29 @@
     }
     .mega-panel.open { transform: translateY(0); }
 
-    .panel-header {
-      padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;
-    }
-    .panel-tabs {
-      display: flex; gap: 5px; overflow-x: auto; padding: 10px 15px;
-      border-bottom: 1px solid #eee;
-    }
-    .tab-btn {
-      padding: 8px 14px; border-radius: 20px; border: 1px solid #eee; background: white;
-      font-size: 12px; cursor: pointer; white-space: nowrap; color: #555;
-    }
+    .panel-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .panel-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 10px 15px; border-bottom: 1px solid #eee; }
+    .tab-btn { padding: 8px 14px; border-radius: 20px; border: 1px solid #eee; background: white; font-size: 12px; cursor: pointer; white-space: nowrap; color: #555; }
     .tab-btn.active { background: var(--green-2); border-color: var(--green-3); color: #2d5a35; font-weight: bold; }
-    
     .panel-content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
-    
-    /* Grid Tools inside Panel */
+
+    /* Image Sticker Grid */
+    .img-sticker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .img-sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; border-radius: 8px; border: 1px solid #eee; padding: 5px; }
+    .img-sticker-item:hover { background: #f0f0f0; }
+
     .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-    .tool-item {
-      display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
-      padding: 15px 5px; background: #f8f9fa; border-radius: 12px; cursor: pointer;
-    }
-    .tool-item i { font-size: 20px; color: #666; }
-    .tool-item span { font-size: 11px; }
+    .tool-item { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 15px 5px; background: #f8f9fa; border-radius: 12px; cursor: pointer; }
 
-    /* Theme Cards */
-    .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .theme-card {
-      padding: 15px; border-radius: 10px; color: white; cursor: pointer;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .overlay.active { opacity: 1; pointer-events: auto; }
     
-    /* PICMO Container Style */
-    #emojiContainer {
-      width: 100%; height: 100%;
-    }
-    /* Fix Picmo sizing */
-    .picmo__picker { width: 100% !important; border: none !important; --emoji-size: 2rem; }
+    #emojiContainer { width: 100%; height: 100%; }
+    .picmo__picker { width: 100% !important; border: none !important; }
 
     @media(min-width: 600px) {
       .mega-panel { width: 400px; left: 50%; transform: translate(-50%, 110%); height: 500px; border-radius: 15px; bottom: 20px; }
       .mega-panel.open { transform: translate(-50%, 0); }
-      .toolbar-container { width: 600px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; bottom: 0; }
     }
   </style>
 </head>
@@ -289,63 +227,65 @@
   <div class="header">
     <div class="logo">🌿</div>
     <div class="title">
-      <h1>Zeli's Garden v4</h1>
+      <h1>Zeli's Garden v5</h1>
       <p>Estetika & Emosi</p>
     </div>
   </div>
-
   <div class="notes-list-view" id="notesList"></div>
 </div>
 
+<!-- EDITOR SCREEN -->
 <div class="editor-view" id="editorView">
-  <div class="editor-topbar">
+  <!-- Top Row: Back, Title, Fullscreen -->
+  <div class="editor-header-row">
     <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
-    <input type="text" class="note-title-input" id="noteTitle" placeholder="Judul..." />
-    <div id="saveIndicator" style="font-size:11px; color:var(--green-3); font-weight:600; white-space:nowrap;"></div>
+    <input type="text" class="note-title-input" id="noteTitle" placeholder="Judul Catatan..." />
+    <div id="saveIndicator" style="font-size:11px; color:var(--green-3); font-weight:600; margin-right:10px;"></div>
+    <button class="tool-btn" onclick="toggleFullScreen()"><i class="fas fa-expand"></i></button>
+  </div>
+
+  <!-- Toolbar Row (Fixed Top) -->
+  <div class="editor-toolbar">
+    <button class="tool-btn active" id="modeBtn" onclick="toggleEditMode()" title="Mode Tulis/Atur"><i class="fas fa-pen"></i></button>
+    <div class="tool-sep"></div>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="openPanel('stickers')"><i class="far fa-smile"></i></button>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="openPanel('images')"><i class="far fa-image"></i></button>
+    <div class="tool-sep"></div>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('undo')"><i class="fas fa-undo"></i></button>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('redo')"><i class="fas fa-redo"></i></button>
+    <div class="tool-sep"></div>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('bold')"><i class="fas fa-bold"></i></button>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('italic')"><i class="fas fa-italic"></i></button>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="insertCheckbox()"><i class="far fa-check-square"></i></button>
+    <button class="tool-btn" onmousedown="evtPd(event)" onclick="openPanel('style')"><i class="fas fa-font"></i></button>
+    <button class="tool-btn menu-trigger" onclick="openPanel('format')" style="background:#333; color:white;"><i class="fas fa-bars"></i></button>
   </div>
 
   <div class="editor-workspace">
     <div class="paper-container" id="paperContainer">
       <div class="paper-pattern" id="paperPattern"></div>
       <div class="sticker-layer back" id="stickerLayerBack"></div>
-      <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="false" placeholder="Tulis sesuatu yang indah..."></div>
+      <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="false" placeholder="Tulis ceritamu di sini..."></div>
       <div class="sticker-layer front" id="stickerLayerFront"></div>
     </div>
-  </div>
-
-  <!-- Optimized Toolbar -->
-  <div class="toolbar-container">
-    <div class="scroll-tools">
-      <button class="tool-btn active" id="modeBtn" onclick="toggleEditMode()"><i class="fas fa-pen"></i></button>
-      <div style="width:1px; height:20px; background:#ddd; margin:0 5px;"></div>
-      
-      <!-- Common tools outside mega menu -->
-      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('undo')"><i class="fas fa-undo"></i></button>
-      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('redo')"><i class="fas fa-redo"></i></button>
-      <button class="tool-btn" onmousedown="evtPd(event)" onclick="insertCheckbox()"><i class="far fa-check-square"></i></button>
-      <button class="tool-btn" onmousedown="evtPd(event)" onclick="insertImagePrompt()"><i class="far fa-image"></i></button>
-      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('bold')"><i class="fas fa-bold"></i></button>
-      <button class="tool-btn" onmousedown="evtPd(event)" onclick="execCmd('italic')"><i class="fas fa-italic"></i></button>
-      <button class="tool-btn" onmousedown="evtPd(event)" id="alignBtn"><i class="fas fa-align-left"></i></button>
-    </div>
-    <button class="menu-trigger" onclick="openPanel('stickers')"><i class="fas fa-bars"></i></button>
   </div>
 </div>
 
 <div class="overlay" id="overlay"></div>
 
+<!-- MEGA PANEL -->
 <div class="mega-panel" id="megaPanel">
   <div class="panel-header">
-    <h3>Tools & Decor</h3>
+    <h3>Tools</h3>
     <button id="closePanel" style="border:none;background:none;font-size:24px;">&times;</button>
   </div>
   
   <div class="panel-tabs">
-    <button class="tab-btn active" data-tab="stickers" onmousedown="evtPd(event)">Stickers</button>
-    <button class="tab-btn" data-tab="style" onmousedown="evtPd(event)">Style</button>
+    <button class="tab-btn active" data-tab="stickers" onmousedown="evtPd(event)">Emoji</button>
+    <button class="tab-btn" data-tab="images" onmousedown="evtPd(event)">Stiker 2</button>
+    <button class="tab-btn" data-tab="style" onmousedown="evtPd(event)">Gaya</button>
     <button class="tab-btn" data-tab="format" onmousedown="evtPd(event)">Format</button>
-    <button class="tab-btn" data-tab="paper" onmousedown="evtPd(event)">Paper</button>
-    <button class="tab-btn" data-tab="meta" onmousedown="evtPd(event)">Meta</button>
+    <button class="tab-btn" data-tab="paper" onmousedown="evtPd(event)">Kertas</button>
   </div>
 
   <div class="panel-content" id="panelContent"></div>
@@ -357,17 +297,34 @@
   const evtPd = e => e.preventDefault();
   
   // --- STATE ---
-  const NOTES_KEY = 'zeli_garden_v4';
+  const NOTES_KEY = 'zeli_garden_v5_final';
   let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
   let currentNote = null;
   let isNewNote = false;
   let isArrangeMode = false;
   let selectedSticker = null;
-  let savedRange = null; // Cursor memory
-  let emojiPicker = null; // Picmo instance
+  let savedRange = null; 
+  let emojiPicker = null; 
+
+  // --- IMAGE STICKER API (Mockup List) ---
+  // Menggunakan URL gambar statis yang lucu/estetik (bebas lisensi/cdn umum)
+  const STICKER_PACK = [
+    'https://cdn-icons-png.flaticon.com/512/4193/4193259.png', // Cat
+    'https://cdn-icons-png.flaticon.com/512/4193/4193305.png', // Plant
+    'https://cdn-icons-png.flaticon.com/512/4193/4193245.png', // Coffee
+    'https://cdn-icons-png.flaticon.com/512/9445/9445672.png', // Flower
+    'https://cdn-icons-png.flaticon.com/512/2919/2919736.png', // Heart
+    'https://cdn-icons-png.flaticon.com/512/1868/1868178.png', // Sun
+    'https://cdn-icons-png.flaticon.com/512/2550/2550269.png', // Cloud
+    'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', // Moon
+    'https://cdn-icons-png.flaticon.com/512/740/740935.png',   // Star
+    'https://cdn-icons-png.flaticon.com/512/2663/2663067.png', // Book
+    'https://cdn-icons-png.flaticon.com/512/869/869869.png',   // Tea
+    'https://cdn-icons-png.flaticon.com/512/2415/2415330.png'  // Camera
+  ];
 
   // --- ELEMENTS ---
-  const elements = {
+  const el = {
     list: $('notesList'), editorView: $('editorView'), 
     editor: $('richEditor'), title: $('noteTitle'),
     paper: $('paperContainer'), pattern: $('paperPattern'),
@@ -383,18 +340,17 @@
 
   function initListeners() {
     $('backBtn').addEventListener('click', closeEditor);
-    elements.editor.addEventListener('input', debounce(autoSave, 1000));
-    elements.title.addEventListener('input', debounce(autoSave, 1000));
+    el.editor.addEventListener('input', debounce(autoSave, 1000));
+    el.title.addEventListener('input', debounce(autoSave, 1000));
     
-    // Save Cursor Position Events
+    // Save Cursor Position
     ['keyup', 'mouseup', 'touchend', 'input', 'blur'].forEach(ev => {
-      elements.editor.addEventListener(ev, saveSelection);
+      el.editor.addEventListener(ev, saveSelection);
     });
 
     $('closePanel').addEventListener('click', closePanel);
-    elements.overlay.addEventListener('click', closePanel);
-    $('alignBtn').addEventListener('click', toggleAlign);
-
+    el.overlay.addEventListener('click', closePanel);
+    
     // Panel Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -404,40 +360,35 @@
       });
     });
 
-    // Deselect Logic
-    elements.paper.addEventListener('click', (e) => {
-      if(e.target === elements.paper || e.target === elements.editor) deselectSticker();
+    // Deselect Logic (Desktop & Mobile)
+    el.paper.addEventListener('mousedown', (e) => {
+      if(e.target === el.paper || e.target === el.editor) deselectSticker();
     });
   }
 
   // --- CORE FUNCTIONS ---
   function renderList() {
-    elements.list.innerHTML = '';
-    // Add Button
+    el.list.innerHTML = '';
     const addCard = document.createElement('div');
     addCard.className = 'note-card add-btn-card';
-    addCard.innerHTML = '<i class="fas fa-plus" style="font-size:30px; margin-bottom:10px;"></i><br>New Story';
+    addCard.innerHTML = '<i class="fas fa-plus" style="font-size:30px; margin-bottom:10px;"></i><br>Catatan Baru';
     addCard.onclick = createNote;
-    elements.list.appendChild(addCard);
+    el.list.appendChild(addCard);
 
     notes.forEach(note => {
       const card = document.createElement('div');
       card.className = 'note-card';
       const prevDiv = document.createElement('div');
       prevDiv.innerHTML = note.content;
-      const preview = prevDiv.textContent.substring(0, 120) || 'Kosong...';
+      const preview = prevDiv.textContent.substring(0, 100) || 'Kosong...';
       
       card.innerHTML = `
         <h3>${note.title || 'Tanpa Judul'}</h3>
         <div class="preview">${preview}</div>
-        <div class="meta">
-          <span>${new Date(note.updatedAt).toLocaleDateString()}</span>
-          <span>${note.mood || '🌿'}</span>
-        </div>
         <button class="delete-card-btn" onclick="deleteNote('${note.id}', event)"><i class="fas fa-times"></i></button>
       `;
       card.onclick = (e) => { if(!e.target.closest('.delete-card-btn')) openNote(note.id); };
-      elements.list.appendChild(card);
+      el.list.appendChild(card);
     });
   }
 
@@ -445,12 +396,11 @@
     isNewNote = true;
     currentNote = {
       id: Date.now().toString(), title: '', content: '', stickers: [],
-      theme: 'default', paper: 'lines', mood: '🌿', updatedAt: Date.now()
+      theme: 'default', paper: 'lines', createdAt: Date.now()
     };
     loadNoteData();
-    isArrangeMode = true; toggleEditMode(); // Set to write mode
-    elements.editorView.classList.add('active');
-    setTimeout(() => { elements.editor.focus(); saveSelection(); }, 100);
+    isArrangeMode = true; toggleEditMode();
+    el.editorView.classList.add('active');
   }
 
   function openNote(id) {
@@ -459,59 +409,52 @@
     if(!currentNote) return;
     loadNoteData();
     isArrangeMode = true; toggleEditMode();
-    elements.editorView.classList.add('active');
+    el.editorView.classList.add('active');
   }
 
   function loadNoteData() {
-    elements.title.value = currentNote.title;
-    elements.editor.innerHTML = currentNote.content;
+    el.title.value = currentNote.title;
+    el.editor.innerHTML = currentNote.content;
     applyTheme(currentNote.theme, false);
     applyPaper(currentNote.paper);
-    
-    elements.layerBack.innerHTML = '';
-    elements.layerFront.innerHTML = '';
+    el.layerBack.innerHTML = ''; el.layerFront.innerHTML = '';
     (currentNote.stickers || []).forEach(renderSticker);
     savedRange = null;
   }
 
   function autoSave() {
-    // Auto Title Logic: If empty, take first 4 words
-    if(!elements.title.value.trim() && elements.editor.innerText.trim()) {
-      const words = elements.editor.innerText.trim().split(/\s+/).slice(0, 4).join(' ');
-      currentNote.title = words;
-      // Note: We don't update the Input value to keep it clean, but we save it.
-      // If you want to show it: elements.title.value = words; 
+    // Auto Title
+    if(!el.title.value.trim() && el.editor.innerText.trim()) {
+      currentNote.title = el.editor.innerText.trim().split(/\s+/).slice(0, 4).join(' ');
     } else {
-      currentNote.title = elements.title.value;
+      currentNote.title = el.title.value;
     }
 
-    currentNote.content = elements.editor.innerHTML;
+    currentNote.content = el.editor.innerHTML;
     currentNote.stickers = getStickersData();
-    currentNote.updatedAt = Date.now();
-
+    
     const idx = notes.findIndex(n => n.id === currentNote.id);
     if(idx > -1) notes[idx] = currentNote;
     else { notes.unshift(currentNote); isNewNote = false; }
     
+    // PERMANENT STORAGE
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    $('saveIndicator').innerText = 'Disimpan...';
+    $('saveIndicator').innerText = 'Disimpan ✓';
     setTimeout(() => $('saveIndicator').innerText = '', 2000);
   }
 
   function closeEditor() {
-    if(!elements.title.value.trim() && !elements.editor.textContent.trim() && currentNote.stickers.length === 0) {
+    if(!el.title.value.trim() && !el.editor.textContent.trim()) {
        notes = notes.filter(n => n.id !== currentNote.id);
        localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    } else {
-      autoSave();
-    }
-    elements.editorView.classList.remove('active');
+    } else autoSave();
+    el.editorView.classList.remove('active');
     renderList();
   }
 
   function deleteNote(id, e) {
     e.stopPropagation();
-    if(confirm('Hapus catatan?')) {
+    if(confirm('Hapus?')) {
       notes = notes.filter(n => n.id !== id);
       localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
       renderList();
@@ -522,26 +465,21 @@
   function saveSelection() {
     if(isArrangeMode) return;
     const sel = window.getSelection();
-    if(sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      if(elements.editor.contains(range.commonAncestorContainer)) savedRange = range;
+    if(sel.rangeCount > 0 && el.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      savedRange = sel.getRangeAt(0);
     }
   }
 
   function restoreSelection() {
-    elements.editor.focus();
+    el.editor.focus();
     if(savedRange) {
       const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(savedRange);
+      sel.removeAllRanges(); sel.addRange(savedRange);
     } else {
-      // Place cursor at end if lost
       const range = document.createRange();
-      range.selectNodeContents(elements.editor);
-      range.collapse(false);
+      range.selectNodeContents(el.editor); range.collapse(false);
       const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
+      sel.removeAllRanges(); sel.addRange(range);
     }
   }
 
@@ -553,165 +491,160 @@
     isArrangeMode = !isArrangeMode;
     const btn = $('modeBtn');
     if(isArrangeMode) {
-      elements.paper.classList.add('arrange-mode');
-      elements.editor.contentEditable = false;
-      btn.innerHTML = '<i class="fas fa-hand-pointer"></i>';
-      btn.classList.remove('active');
+      el.paper.classList.add('arrange-mode'); el.editor.contentEditable = false;
+      btn.innerHTML = '<i class="fas fa-hand-pointer"></i>'; btn.classList.remove('active');
     } else {
-      elements.paper.classList.remove('arrange-mode');
-      elements.editor.contentEditable = true;
-      btn.innerHTML = '<i class="fas fa-pen"></i>';
-      btn.classList.add('active');
+      el.paper.classList.remove('arrange-mode'); el.editor.contentEditable = true;
+      btn.innerHTML = '<i class="fas fa-pen"></i>'; btn.classList.add('active');
       restoreSelection();
     }
   }
 
-  function toggleAlign() {
-    restoreSelection();
-    const modes = ['justifyLeft', 'justifyCenter', 'justifyRight'];
-    const icons = ['fa-align-left', 'fa-align-center', 'fa-align-right'];
-    let idx = parseInt($('alignBtn').dataset.idx || 0);
-    idx = (idx + 1) % 3;
-    document.execCommand(modes[idx]);
-    $('alignBtn').dataset.idx = idx;
-    $('alignBtn').innerHTML = `<i class="fas ${icons[idx]}"></i>`;
-    saveSelection();
+  function toggleFullScreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
   }
 
   function insertCheckbox() {
     restoreSelection();
     document.execCommand('insertHTML', false, '<input type="checkbox" style="vertical-align:middle; margin-right:5px;">&nbsp;');
-    saveSelection();
   }
 
-  function insertImagePrompt() {
-    const input = document.createElement('input'); input.type='file'; input.accept='image/*';
-    input.onchange = e => {
-      const f = e.target.files[0];
-      if(f) {
-        const r = new FileReader();
-        r.onload = ev => { restoreSelection(); document.execCommand('insertImage', false, ev.target.result); saveSelection(); };
-        r.readAsDataURL(f);
-      }
-    };
-    input.click();
-  }
-
-  // --- STICKER ENGINE (Advanced Gestures) ---
-  function addSticker(emoji) {
-    const s = { id: 's'+Date.now(), emoji, x: 100, y: 100, rot: 0, scale: 1.5, layer: 'front' };
-    renderSticker(s);
-    autoSave();
-    // Keep panel open for more stickers
+  // --- STICKER ENGINE (Unified Text/Image) ---
+  function addSticker(content, type = 'text') {
+    const s = { id: 's'+Date.now(), content, type, x: 100, y: 100, rot: 0, scale: 1, layer: 'front' };
+    renderSticker(s); autoSave();
+    // Don't close panel immediately for multi-add
   }
 
   function renderSticker(data) {
-    const el = document.createElement('div');
-    el.className = 'sticker'; el.id = data.id;
-    el.style.left = data.x + 'px'; el.style.top = data.y + 'px';
-    el.style.transform = `rotate(${data.rot}deg) scale(${data.scale})`;
-    el.dataset.emoji = data.emoji; el.dataset.rot = data.rot; 
-    el.dataset.scale = data.scale; el.dataset.layer = data.layer;
+    const ele = document.createElement('div');
+    ele.className = 'sticker'; ele.id = data.id;
+    ele.style.left = data.x + 'px'; ele.style.top = data.y + 'px';
+    ele.style.transform = `rotate(${data.rot}deg) scale(${data.scale})`;
+    ele.dataset.content = data.content; ele.dataset.type = data.type;
+    ele.dataset.rot = data.rot; ele.dataset.scale = data.scale; ele.dataset.layer = data.layer;
     
-    el.innerHTML = `
-      <div class="sticker-content">${data.emoji}</div>
-      <div class="sticker-controls">
-        <div class="ctrl-btn ctrl-del"><i class="fas fa-times"></i></div>
-        <div class="ctrl-btn ctrl-layer"><i class="fas fa-layer-group"></i></div>
-      </div>
-    `; // Removed rotate/resize handles for mobile cleanness, gestures used instead
+    // HTML Content based on type
+    let innerHTML = '';
+    if(data.type === 'image') {
+       innerHTML = `<img src="${data.content}" draggable="false" />`;
+       ele.style.width = '100px'; // base width for images
+    } else {
+       innerHTML = `<div class="sticker-content">${data.content}</div>`;
+    }
 
-    const parent = data.layer === 'back' ? elements.layerBack : elements.layerFront;
-    parent.appendChild(el);
-    attachStickerEvents(el);
+    // Controls for Desktop (Handles)
+    ele.innerHTML = `
+      ${innerHTML}
+      <div class="sticker-handle handle-resize"></div>
+      <div class="sticker-handle handle-rotate"></div>
+      <div class="sticker-handle handle-delete">x</div>
+    `;
+
+    const parent = data.layer === 'back' ? el.layerBack : el.layerFront;
+    parent.appendChild(ele);
+    attachStickerEvents(ele);
   }
 
-  function attachStickerEvents(el) {
-    // Mouse & Touch Logic
-    let startX, startY, startRot, startScale;
-    let initialPinchDist = 0;
-    let initialPinchAngle = 0;
+  function attachStickerEvents(ele) {
+    // --- MOUSE & TOUCH LOGIC ---
+    let startX, startY, startRot, startScale, startAngle;
+    
+    // Selection Logic
+    ele.addEventListener('mousedown', e => { e.stopPropagation(); selectSticker(ele); });
+    ele.addEventListener('touchstart', e => { e.stopPropagation(); selectSticker(ele); });
 
-    const onStart = (e) => {
-      if(e.target.classList.contains('ctrl-btn')) return;
-      selectSticker(el);
+    // 1. DRAG (Content)
+    const onDragStart = (e) => {
+      if(e.target.classList.contains('sticker-handle')) return; // Ignore handles
+      e.preventDefault();
+      const p = e.type.includes('mouse') ? e : e.touches[0];
+      startX = p.clientX; startY = p.clientY;
+      ele.dataset.sx = ele.offsetLeft; ele.dataset.sy = ele.offsetTop;
       
-      if(e.type === 'touchstart' && e.touches.length === 2) {
-        // Pinch / Rotate Mode
-        e.preventDefault();
-        const t1 = e.touches[0]; const t2 = e.touches[1];
-        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        initialPinchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-        startScale = parseFloat(el.dataset.scale);
-        startRot = parseFloat(el.dataset.rot);
-      } else {
-        // Drag Mode
-        const p = e.type.includes('mouse') ? e : e.touches[0];
-        startX = p.clientX; startY = p.clientY;
-        el.dataset.startX = el.offsetLeft;
-        el.dataset.startY = el.offsetTop;
-      }
-      
-      document.addEventListener(e.type === 'mousedown' ? 'mousemove' : 'touchmove', onMove, {passive:false});
-      document.addEventListener(e.type === 'mousedown' ? 'mouseup' : 'touchend', onEnd);
+      const move = (ev) => {
+        const pp = ev.type.includes('mouse') ? ev : ev.touches[0];
+        ele.style.left = (parseFloat(ele.dataset.sx) + (pp.clientX - startX)) + 'px';
+        ele.style.top = (parseFloat(ele.dataset.sy) + (pp.clientY - startY)) + 'px';
+      };
+      const stop = () => {
+         document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop);
+         document.removeEventListener('touchmove', move); document.removeEventListener('touchend', stop);
+         autoSave();
+      };
+      document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move); document.addEventListener('touchend', stop);
     };
+    ele.addEventListener('mousedown', onDragStart);
+    ele.addEventListener('touchstart', onDragStart);
 
-    const onMove = (e) => {
-      if(e.type === 'touchmove' && e.touches.length === 2) {
-        // Handle Pinch/Rotate
-        e.preventDefault();
-        const t1 = e.touches[0]; const t2 = e.touches[1];
-        const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-        
-        // Scale
-        const scaleDiff = (dist / initialPinchDist);
-        const newScale = Math.max(0.5, Math.min(5, startScale * scaleDiff));
-        
-        // Rotate (convert radians to deg)
-        const angleDiff = (angle - initialPinchAngle) * (180/Math.PI);
-        const newRot = startRot + angleDiff;
+    // 2. RESIZE (Handle)
+    const resizeHandle = ele.querySelector('.handle-resize');
+    const onResizeStart = (e) => {
+      e.stopPropagation(); e.preventDefault();
+      const rect = ele.getBoundingClientRect();
+      const center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+      startScale = parseFloat(ele.dataset.scale);
+      const p = e.type.includes('mouse') ? e : e.touches[0];
+      const startDist = Math.hypot(p.clientX - center.x, p.clientY - center.y);
 
-        el.style.transform = `rotate(${newRot}deg) scale(${newScale})`;
-        el.dataset.scale = newScale;
-        el.dataset.rot = newRot;
-
-      } else if ((e.type === 'mousemove' || e.touches.length === 1)) {
-        // Handle Drag
-        e.preventDefault(); // Stop page scroll
-        const p = e.type.includes('mouse') ? e : e.touches[0];
-        const dx = p.clientX - startX;
-        const dy = p.clientY - startY;
-        el.style.left = (parseFloat(el.dataset.startX) + dx) + 'px';
-        el.style.top = (parseFloat(el.dataset.startY) + dy) + 'px';
-      }
+      const move = (ev) => {
+        const pp = ev.type.includes('mouse') ? ev : ev.touches[0];
+        const dist = Math.hypot(pp.clientX - center.x, pp.clientY - center.y);
+        const newScale = Math.max(0.2, startScale * (dist / startDist));
+        ele.style.transform = `rotate(${ele.dataset.rot}deg) scale(${newScale})`;
+        ele.dataset.scale = newScale;
+      };
+      const stop = () => {
+         document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop);
+         document.removeEventListener('touchmove', move); document.removeEventListener('touchend', stop);
+         autoSave();
+      };
+      document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move); document.addEventListener('touchend', stop);
     };
+    resizeHandle.addEventListener('mousedown', onResizeStart);
+    resizeHandle.addEventListener('touchstart', onResizeStart);
 
-    const onEnd = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('mouseup', onEnd);
-      document.removeEventListener('touchend', onEnd);
-      autoSave();
+    // 3. ROTATE (Handle)
+    const rotHandle = ele.querySelector('.handle-rotate');
+    const onRotStart = (e) => {
+      e.stopPropagation(); e.preventDefault();
+      const rect = ele.getBoundingClientRect();
+      const center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+      const p = e.type.includes('mouse') ? e : e.touches[0];
+      startAngle = Math.atan2(p.clientY - center.y, p.clientX - center.x);
+      startRot = parseFloat(ele.dataset.rot);
+
+      const move = (ev) => {
+        const pp = ev.type.includes('mouse') ? ev : ev.touches[0];
+        const angle = Math.atan2(pp.clientY - center.y, pp.clientX - center.x);
+        const deg = (angle - startAngle) * (180/Math.PI);
+        const newRot = startRot + deg;
+        ele.style.transform = `rotate(${newRot}deg) scale(${ele.dataset.scale})`;
+        ele.dataset.rot = newRot;
+      };
+      const stop = () => {
+         document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop);
+         document.removeEventListener('touchmove', move); document.removeEventListener('touchend', stop);
+         autoSave();
+      };
+      document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move); document.addEventListener('touchend', stop);
     };
+    rotHandle.addEventListener('mousedown', onRotStart);
+    rotHandle.addEventListener('touchstart', onRotStart);
 
-    el.addEventListener('mousedown', onStart);
-    el.addEventListener('touchstart', onStart, {passive:false});
-
-    // Button Events
-    el.querySelector('.ctrl-del').addEventListener('click', (e) => { e.stopPropagation(); el.remove(); autoSave(); });
-    el.querySelector('.ctrl-layer').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isFront = el.dataset.layer === 'front';
-      el.dataset.layer = isFront ? 'back' : 'front';
-      if(isFront) elements.layerBack.appendChild(el); else elements.layerFront.appendChild(el);
-      autoSave();
+    // 4. DELETE
+    ele.querySelector('.handle-delete').addEventListener('click', (e) => {
+      e.stopPropagation(); ele.remove(); autoSave();
     });
   }
 
-  function selectSticker(el) {
+  function selectSticker(ele) {
     if(selectedSticker) selectedSticker.classList.remove('selected');
-    selectedSticker = el; el.classList.add('selected');
+    selectedSticker = ele; ele.classList.add('selected');
   }
   function deselectSticker() {
     if(selectedSticker) { selectedSticker.classList.remove('selected'); selectedSticker = null; }
@@ -719,13 +652,13 @@
 
   function getStickersData() {
     const arr = [];
-    [elements.layerBack, elements.layerFront].forEach(layer => {
-      Array.from(layer.children).forEach(el => {
+    [el.layerBack, el.layerFront].forEach(layer => {
+      Array.from(layer.children).forEach(ele => {
         arr.push({ 
-          id: el.id, emoji: el.dataset.emoji, 
-          x: parseFloat(el.style.left), y: parseFloat(el.style.top), 
-          rot: parseFloat(el.dataset.rot), scale: parseFloat(el.dataset.scale), 
-          layer: el.dataset.layer 
+          id: ele.id, content: ele.dataset.content, type: ele.dataset.type,
+          x: parseFloat(ele.style.left), y: parseFloat(ele.style.top), 
+          rot: parseFloat(ele.dataset.rot), scale: parseFloat(ele.dataset.scale), 
+          layer: ele.dataset.layer 
         });
       });
     });
@@ -735,116 +668,75 @@
   // --- PANELS & THEMES ---
   function openPanel(tab) {
     saveSelection();
-    elements.panel.classList.add('open'); elements.overlay.classList.add('active');
+    el.panel.classList.add('open'); el.overlay.classList.add('active');
     document.querySelector(`.tab-btn[data-tab="${tab}"]`).click();
   }
   function closePanel() {
-    elements.panel.classList.remove('open'); elements.overlay.classList.remove('active');
+    el.panel.classList.remove('open'); el.overlay.classList.remove('active');
     if(!isArrangeMode) restoreSelection();
   }
 
   function renderPanel(tab) {
-    elements.panelContent.innerHTML = '';
+    el.panelContent.innerHTML = '';
 
     if(tab === 'stickers') {
-      // Initialize Picmo
-      const container = document.createElement('div');
-      container.id = 'emojiContainer';
-      elements.panelContent.appendChild(container);
-      
+      const container = document.createElement('div'); container.id = 'emojiContainer';
+      el.panelContent.appendChild(container);
       if(!emojiPicker) {
         emojiPicker = picmo.createPicker({ rootElement: container, native: true });
-        emojiPicker.addEventListener('emoji:select', selection => {
-          addSticker(selection.emoji);
-        });
+        emojiPicker.addEventListener('emoji:select', s => addSticker(s.emoji, 'text'));
       } else {
-        // Re-append existing instance logic if needed, but creating new is safer for layout
-        container.innerHTML = ''; 
-        emojiPicker = picmo.createPicker({ rootElement: container, native: true });
-        emojiPicker.addEventListener('emoji:select', selection => addSticker(selection.emoji));
+        container.innerHTML = ''; emojiPicker = picmo.createPicker({ rootElement: container, native: true });
+        emojiPicker.addEventListener('emoji:select', s => addSticker(s.emoji, 'text'));
       }
     } 
-    else if(tab === 'style') {
-      // Font & Style
-      const fonts = ['Quicksand', 'Caveat', 'Kalam', 'Sacramento', 'Dancing Script', 'Indie Flower', 'Courier New'];
-      let h = `<div class="tool-grid">`;
-      fonts.forEach(f => {
-        h += `<div class="tool-item" onmousedown="evtPd(event)" onclick="setFont('${f}')" style="font-family:${f}; font-size:16px;">Aa<br><span>${f}</span></div>`;
+    else if(tab === 'images') {
+      // API STICKER MOCKUP (Image Grid)
+      let html = '<div class="img-sticker-grid">';
+      STICKER_PACK.forEach(url => {
+        html += `<img src="${url}" class="img-sticker-item" onclick="addSticker('${url}', 'image')">`;
       });
-      h += `</div><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`;
-      h += `<div class="tool-grid">
-         <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('fontSize', 3)">Norm</div>
-         <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('fontSize', 5)">Big</div>
-         <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('hiliteColor', '#ffd6e0')"><span style="background:#ffd6e0">Hilite</span></div>
-      </div>`;
-      elements.panelContent.innerHTML = h;
+      html += '</div><p style="text-align:center;font-size:11px;color:#999;margin-top:10px;">Gambar dari Flaticon (API Simulation)</p>';
+      el.panelContent.innerHTML = html;
     }
-    else if(tab === 'theme') {
-      const themes = [
-        {id:'default', name:'🌿 Soft', col:'#3f6f45', bg:'#fffaf0'},
-        {id:'dark', name:'🌑 Night', col:'#ddd', bg:'#222'},
-        {id:'pink', name:'🌸 Pink', col:'#c56582', bg:'#fff0f5'},
-        {id:'blue', name:'🦋 Sky', col:'#333', bg:'#f0f8ff'}
-      ];
-      let h = '<div class="theme-grid">';
-      themes.forEach(t => {
-        h += `<div class="theme-card" onmousedown="evtPd(event)" style="background:${t.col}" onclick="applyTheme('${t.id}')">
-          <span>${t.name}</span><div style="width:15px;height:15px;border-radius:50%;background:${t.bg}"></div>
-        </div>`;
-      });
-      h += '</div>';
-      elements.panelContent.innerHTML = h;
+    else if(tab === 'style') {
+      const fonts = ['Quicksand', 'Caveat', 'Patrick Hand', 'Kalam'];
+      let h = `<div class="tool-grid">`;
+      fonts.forEach(f => h += `<div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('fontName', '${f}')" style="font-family:${f}">Aa<br><span>${f}</span></div>`);
+      h += `</div>`;
+      el.panelContent.innerHTML = h;
     }
     else if(tab === 'format') {
-       elements.panelContent.innerHTML = `
+       el.panelContent.innerHTML = `
         <div class="tool-grid">
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('justifyLeft')"><i class="fas fa-align-left"></i><span>Kiri</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('justifyCenter')"><i class="fas fa-align-center"></i><span>Tengah</span></div>
           <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i><span>List</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertOrderedList')"><i class="fas fa-list-ol"></i><span>123</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertHorizontalRule')"><i class="fas fa-minus"></i><span>Line</span></div>
-          <div class="tool-item" onmousedown="evtPd(event)" onclick="document.execCommand('insertHTML',false,'<blockquote>Quote</blockquote>')"><i class="fas fa-quote-right"></i><span>Quote</span></div>
+          <div class="tool-item" onmousedown="evtPd(event)" onclick="execCmd('insertHorizontalRule')"><i class="fas fa-minus"></i><span>Garis</span></div>
         </div>`;
     }
     else if(tab === 'paper') {
-       elements.panelContent.innerHTML = `
+       el.panelContent.innerHTML = `
         <div class="tool-grid">
           <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('lines')"><i class="fas fa-bars"></i><span>Garis</span></div>
           <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('grid')"><i class="fas fa-border-all"></i><span>Kotak</span></div>
           <div class="tool-item" onmousedown="evtPd(event)" onclick="applyPaper('plain')"><i class="far fa-file"></i><span>Polos</span></div>
         </div>`;
     }
-    else if(tab === 'meta') {
-       elements.panelContent.innerHTML = `
-        <div class="tool-grid">
-           <div class="tool-item" onmousedown="evtPd(event)" onclick="alert(elements.editor.innerText.split(' ').length + ' Words')"><i class="fas fa-calculator"></i><span>Count</span></div>
-           <div class="tool-item" onmousedown="evtPd(event)" onclick="const m=prompt('Mood?'); if(m){currentNote.mood=m; autoSave();}"><i class="far fa-smile"></i><span>Mood</span></div>
-        </div>`;
-    }
   }
 
-  function setFont(f) { execCmd('fontName', f); }
-  
   function applyTheme(id, save=true) {
     if(save) { currentNote.theme = id; autoSave(); }
-    const t = {
-      'default': { bg:'#fffaf0', col:'#333', font:'Quicksand'},
-      'dark': { bg:'#2d2d2d', col:'#e0e0e0', font:'Inter'},
-      'pink': { bg:'#fff0f5', col:'#880e4f', font:'Caveat'},
-      'blue': { bg:'#f0f8ff', col:'#01579b', font:'Nunito'}
-    }[id] || {bg:'#fffaf0'};
-    
-    elements.paper.style.backgroundColor = t.bg;
-    elements.editor.style.color = t.col;
-    if(save) elements.editor.style.fontFamily = t.font;
+    const t = { 'default': { bg:'#fffaf0', col:'#333', font:'Quicksand'} }[id] || {bg:'#fffaf0'};
+    el.paper.style.backgroundColor = t.bg; el.editor.style.color = t.col;
   }
-
   function applyPaper(type) {
     currentNote.paper = type;
-    const c = currentNote.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-    let bg = '';
-    if(type === 'lines') bg = `repeating-linear-gradient(transparent, transparent 31px, ${c} 31px, ${c} 32px)`;
-    if(type === 'grid') bg = `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`;
-    elements.pattern.style.backgroundImage = bg;
-    elements.pattern.style.backgroundSize = type === 'grid' ? '20px 20px' : '100% 32px';
+    const c = 'rgba(0,0,0,0.05)';
+    let bg = type === 'lines' ? `repeating-linear-gradient(transparent, transparent 31px, ${c} 31px, ${c} 32px)` :
+             type === 'grid' ? `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)` : '';
+    el.pattern.style.backgroundImage = bg;
+    el.pattern.style.backgroundSize = type === 'grid' ? '20px 20px' : '100% 32px';
     autoSave();
   }
 
