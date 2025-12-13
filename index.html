@@ -364,6 +364,102 @@
       font-size: 30px; cursor: pointer;
     }
     .sticker-item:hover { background: #e9ecef; }
+    
+    /* Custom Sticker Upload Section */
+    .custom-sticker-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      border: 2px dashed var(--green-3);
+      border-radius: 15px;
+      background-color: rgba(142, 207, 154, 0.1);
+      margin-bottom: 20px;
+    }
+    
+    .upload-btn {
+      padding: 10px 20px;
+      background-color: var(--green-3);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .upload-tips {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    
+    .custom-sticker-history {
+      margin-top: 20px;
+    }
+    
+    .custom-sticker-history h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .custom-sticker-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    
+    .custom-sticker-item {
+      position: relative;
+      height: 60px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    
+    .custom-sticker-item img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .custom-sticker-item:hover {
+      background: #e9ecef;
+    }
+    
+    .delete-sticker-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(255, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .custom-sticker-item:hover .delete-sticker-btn {
+      opacity: 1;
+    }
 
     /* Fullscreen button for list view */
     .list-fullscreen-btn {
@@ -526,7 +622,7 @@
   
   <div class="panel-tabs">
     <button class="tab-btn active" data-tab="stickers" onmousedown="evtPd(event)">Stickers</button>
-    <button class="tab-btn" data-tab="stickers2" onmousedown="evtPd(event)">Stickers 2</button>
+    <button class="tab-btn" data-tab="stickers2" onmousedown="evtPd(event)">Custom Stickers</button>
     <button class="tab-btn" data-tab="style" onmousedown="evtPd(event)">Style</button>
     <button class="tab-btn" data-tab="format" onmousedown="evtPd(event)">Format</button>
     <button class="tab-btn" data-tab="paper" onmousedown="evtPd(event)">Paper</button>
@@ -538,6 +634,8 @@
 
 <!-- Hidden file input for import -->
 <input type="file" id="importFileInput" style="display:none" accept=".json">
+<!-- Hidden file input for custom sticker upload -->
+<input type="file" id="customStickerInput" style="display:none" accept="image/png,image/webp">
 
 <script>
   // --- HELPERS ---
@@ -547,7 +645,9 @@
   // --- STATE ---
   const NOTES_KEY = 'zeli_garden_v4';
   const MODE_KEY = 'zeli_garden_mode';
+  const CUSTOM_STICKERS_KEY = 'zeli_garden_custom_stickers';
   let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+  let customStickers = JSON.parse(localStorage.getItem(CUSTOM_STICKERS_KEY) || '[]');
   let currentNote = null;
   let isNewNote = false;
   let isArrangeMode = false;
@@ -574,7 +674,7 @@
     importBtn: $('importBtn'), importFileInput: $('importFileInput'),
     modeSelection: $('modeSelection'), listFullscreenBtn: $('listFullscreenBtn'),
     pageNav: $('pageNav'), addPageBtn: $('addPageBtn'),
-    screenshotBtn: $('screenshotBtn')
+    screenshotBtn: $('screenshotBtn'), customStickerInput: $('customStickerInput')
   };
 
   // --- INIT ---
@@ -695,6 +795,9 @@
     
     // Screenshot button
     elements.screenshotBtn.addEventListener('click', takeScreenshot);
+    
+    // Custom sticker upload
+    elements.customStickerInput.addEventListener('change', handleCustomStickerUpload);
     
     // Prevent Enter key from creating new lines beyond 55
     elements.editor.addEventListener('keydown', function(e) {
@@ -1024,15 +1127,32 @@
 
   // --- EXPORT/IMPORT FUNCTIONS ---
   function exportNotes() {
-    const dataStr = JSON.stringify(notes, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    // Create a comprehensive export object with all necessary data
+    const exportData = {
+      version: "1.0",
+      exportDate: new Date().toISOString(),
+      appInfo: {
+        name: "Zeli's Garden v4",
+        description: "Estetika & Emosi"
+      },
+      notes: notes,
+      customStickers: customStickers
+    };
     
+    // Convert to JSON string with formatting
+    const dataStr = JSON.stringify(exportData, null, 2);
+    
+    // Create download link
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     const exportFileDefaultName = `zeli_garden_backup_${new Date().toISOString().slice(0,10)}.json`;
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+    
+    // Show success message
+    alert('Backup berhasil diunduh! File berisi semua catatan dan stiker kustom Anda.');
   }
 
   function importNotes(e) {
@@ -1042,20 +1162,113 @@
     const reader = new FileReader();
     reader.onload = function(event) {
       try {
-        const importedNotes = JSON.parse(event.target.result);
-        if (Array.isArray(importedNotes)) {
-          notes = importedNotes;
+        const importedData = JSON.parse(event.target.result);
+        
+        // Check if this is a valid export file
+        if (importedData.version && importedData.notes) {
+          // Ask user what to do with existing notes
+          const mergeChoice = confirm('Apakah Anda ingin menggabungkan catatan yang diimpor dengan yang sudah ada? (OK untuk menggabungkan, Batal untuk mengganti semua)');
+          
+          if (mergeChoice) {
+            // Merge notes - add imported notes to existing ones
+            // Create a map of existing note IDs to avoid duplicates
+            const existingNoteIds = new Set(notes.map(note => note.id));
+            
+            // Add only new notes
+            importedData.notes.forEach(note => {
+              if (!existingNoteIds.has(note.id)) {
+                notes.push(note);
+              }
+            });
+            
+            // Merge custom stickers
+            const existingStickerIds = new Set(customStickers.map(sticker => sticker.id));
+            importedData.customStickers.forEach(sticker => {
+              if (!existingStickerIds.has(sticker.id)) {
+                customStickers.push(sticker);
+              }
+            });
+          } else {
+            // Replace all notes
+            notes = importedData.notes;
+            customStickers = importedData.customStickers || [];
+          }
+          
+          // Save to localStorage
+          localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+          localStorage.setItem(CUSTOM_STICKERS_KEY, JSON.stringify(customStickers));
+          
+          // Refresh the UI
+          renderList();
+          alert('Import berhasil! ' + 
+                (mergeChoice ? 'Catatan dan stiker baru telah ditambahkan.' : 'Semua catatan telah diganti.'));
+        } else if (Array.isArray(importedData)) {
+          // Handle legacy format (direct array of notes)
+          notes = importedData;
           localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
           renderList();
-          alert('Import berhasil!');
+          alert('Import berhasil! Format legacy telah dikonversi.');
         } else {
           alert('File tidak valid. Harap unggah file backup yang benar.');
         }
       } catch (error) {
+        console.error('Import error:', error);
         alert('Error saat mengimpor file: ' + error.message);
       }
+      
+      // Reset file input
+      e.target.value = '';
     };
     reader.readAsText(file);
+  }
+
+  // --- CUSTOM STICKER FUNCTIONS ---
+  function handleCustomStickerUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.match('image/png') && !file.type.match('image/webp')) {
+      alert('Hanya file PNG atau WEBP yang diperbolehkan.');
+      return;
+    }
+    
+    // Read file as data URL
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const dataUrl = event.target.result;
+      
+      // Create sticker object
+      const sticker = {
+        id: 'custom_' + Date.now(),
+        name: file.name,
+        dataUrl: dataUrl,
+        uploadDate: new Date().toISOString()
+      };
+      
+      // Add to custom stickers
+      customStickers.push(sticker);
+      localStorage.setItem(CUSTOM_STICKERS_KEY, JSON.stringify(customStickers));
+      
+      // Refresh the custom stickers panel
+      renderPanel('stickers2');
+      
+      // Show success message
+      alert('Stiker berhasil diunggah!');
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // Reset file input
+    e.target.value = '';
+  }
+  
+  function deleteCustomSticker(stickerId) {
+    if (confirm('Hapus stiker ini?')) {
+      customStickers = customStickers.filter(s => s.id !== stickerId);
+      localStorage.setItem(CUSTOM_STICKERS_KEY, JSON.stringify(customStickers));
+      renderPanel('stickers2');
+    }
   }
 
   // --- DATA COMPRESSION ---
@@ -1152,7 +1365,7 @@
   }
 
   // --- STICKER ENGINE (Simplified with 4 controls) ---
-  function addSticker(emoji) {
+  function addSticker(emoji, isCustom = false, customDataUrl = null) {
     const s = { 
       id: 's'+Date.now(), 
       emoji, 
@@ -1161,7 +1374,9 @@
       rot: 0, 
       scale: 1.5, 
       layer: 'front',
-      page: currentPage 
+      page: currentPage,
+      isCustom: isCustom,
+      customDataUrl: customDataUrl
     };
     renderSticker(s);
     autoSave();
@@ -1173,8 +1388,9 @@
     el.className = 'sticker'; el.id = data.id;
     el.style.left = data.x + 'px'; el.style.top = data.y + 'px';
     el.style.transform = `rotate(${data.rot}deg) scale(${data.scale})`;
-    el.dataset.emoji = data.emoji; el.dataset.rot = data.rot; 
-    el.dataset.scale = data.scale; el.dataset.layer = data.layer;
+    el.dataset.rot = data.rot; 
+    el.dataset.scale = data.scale; 
+    el.dataset.layer = data.layer;
     el.dataset.page = data.page || 1;
     
     // Only show sticker if it's on the current page
@@ -1182,8 +1398,20 @@
       el.style.display = 'none';
     }
     
+    // Create sticker content based on whether it's custom or emoji
+    let stickerContent;
+    if (data.isCustom) {
+      stickerContent = `<img src="${data.customDataUrl}" style="width: 60px; height: 60px; object-fit: contain;">`;
+      el.dataset.isCustom = 'true';
+      el.dataset.customDataUrl = data.customDataUrl;
+    } else {
+      stickerContent = `<div class="sticker-content">${data.emoji}</div>`;
+      el.dataset.emoji = data.emoji;
+      el.dataset.isCustom = 'false';
+    }
+    
     el.innerHTML = `
-      <div class="sticker-content">${data.emoji}</div>
+      ${stickerContent}
       <div class="sticker-controls">
         <div class="ctrl-btn ctrl-del"><i class="fas fa-times"></i></div>
         <div class="ctrl-btn ctrl-layer"><i class="fas fa-layer-group"></i></div>
@@ -1356,8 +1584,12 @@
     const arr = [];
     [elements.layerBack, elements.layerFront].forEach(layer => {
       Array.from(layer.children).forEach(el => {
+        const isCustom = el.dataset.isCustom === 'true';
         arr.push({ 
-          id: el.id, emoji: el.dataset.emoji, 
+          id: el.id, 
+          emoji: isCustom ? null : el.dataset.emoji,
+          isCustom: isCustom,
+          customDataUrl: isCustom ? el.dataset.customDataUrl : null,
           x: parseFloat(el.style.left), y: parseFloat(el.style.top), 
           rot: parseFloat(el.dataset.rot), scale: parseFloat(el.dataset.scale), 
           layer: el.dataset.layer, page: parseInt(el.dataset.page) || 1
@@ -1541,64 +1773,56 @@
       }
     } 
     else if(tab === 'stickers2') {
-      // Render OpenMoji stickers with categories
-      const categories = ['all', 'nature', 'animals', 'food', 'activities', 'objects', 'symbols'];
-      let html = '<div class="sticker-categories">';
+      // Custom Sticker Upload Section
+      const uploadSection = document.createElement('div');
+      uploadSection.className = 'custom-sticker-upload';
+      uploadSection.innerHTML = `
+        <button class="upload-btn" onclick="document.getElementById('customStickerInput').click()">
+          <i class="fas fa-upload"></i> Upload Stiker Pribadi
+        </button>
+        <div class="upload-tips">
+          <p><strong>Upload stiker pribadi</strong></p>
+          <p>• Format: PNG / WEBP</p>
+          <p>• Latar transparan disarankan</p>
+          <p>• Stiker akan tersimpan di catatan ini</p>
+          <p><strong>Tips:</strong> Gunakan gambar PNG dengan background transparan agar stiker terlihat rapi ✨</p>
+        </div>
+      `;
+      elements.panelContent.appendChild(uploadSection);
       
-      categories.forEach(cat => {
-        html += `<div class="sticker-category ${cat === 'all' ? 'active' : ''}" data-category="${cat}">${cat}</div>`;
-      });
-      
-      html += '</div><div class="sticker-grid">';
-      
-      // Filter and render stickers
-      const filteredStickers = openmojiData.slice(0, 50); // Limit for performance
-      filteredStickers.forEach(sticker => {
-        html += `<div class="sticker-item" data-emoji="${sticker.emoji}">${sticker.emoji}</div>`;
-      });
-      
-      html += '</div>';
-      elements.panelContent.innerHTML = html;
-      
-      // Add click events to stickers
-      document.querySelectorAll('.sticker-item').forEach(item => {
-        item.addEventListener('click', () => {
-          addSticker(item.dataset.emoji);
-          closePanel(); // Close panel after selecting sticker
-        });
-      });
-      
-      // Add click events to categories
-      document.querySelectorAll('.sticker-category').forEach(cat => {
-        cat.addEventListener('click', () => {
-          document.querySelectorAll('.sticker-category').forEach(c => c.classList.remove('active'));
-          cat.classList.add('active');
+      // Custom Sticker History Section
+      if (customStickers.length > 0) {
+        const historySection = document.createElement('div');
+        historySection.className = 'custom-sticker-history';
+        historySection.innerHTML = '<h3>Stiker Pribadi</h3>';
+        
+        const stickerGrid = document.createElement('div');
+        stickerGrid.className = 'custom-sticker-grid';
+        
+        customStickers.forEach(sticker => {
+          const stickerItem = document.createElement('div');
+          stickerItem.className = 'custom-sticker-item';
+          stickerItem.innerHTML = `
+            <img src="${sticker.dataUrl}" alt="${sticker.name}">
+            <button class="delete-sticker-btn" onclick="deleteCustomSticker('${sticker.id}')">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
           
-          const category = cat.dataset.category;
-          let filteredStickers = openmojiData;
-          
-          if (category !== 'all') {
-            filteredStickers = openmojiData.filter(sticker => 
-              sticker.tags && sticker.tags.includes(category)
-            );
-          }
-          
-          const grid = document.querySelector('.sticker-grid');
-          grid.innerHTML = '';
-          
-          filteredStickers.slice(0, 50).forEach(sticker => {
-            const item = document.createElement('div');
-            item.className = 'sticker-item';
-            item.dataset.emoji = sticker.emoji;
-            item.textContent = sticker.emoji;
-            item.addEventListener('click', () => {
-              addSticker(sticker.emoji);
-              closePanel(); // Close panel after selecting sticker
-            });
-            grid.appendChild(item);
+          // Add click event to add sticker to note
+          stickerItem.addEventListener('click', (e) => {
+            if (!e.target.closest('.delete-sticker-btn')) {
+              addSticker(null, true, sticker.dataUrl);
+              closePanel();
+            }
           });
+          
+          stickerGrid.appendChild(stickerItem);
         });
-      });
+        
+        historySection.appendChild(stickerGrid);
+        elements.panelContent.appendChild(historySection);
+      }
     }
     else if(tab === 'style') {
       // Font & Style with toggle functionality
