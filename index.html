@@ -13,6 +13,8 @@
   <script src="https://unpkg.com/picmo@latest/dist/umd/index.js"></script>
   <!-- OpenMoji API -->
   <script src="https://cdn.jsdelivr.net/npm/openmoji@14.0.0/dist/openmoji.min.js"></script>
+  <!-- html2canvas for screenshot functionality -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root{
@@ -215,7 +217,18 @@
     
     .paper-container.arrange-mode .rich-editor { pointer-events: none; opacity: 0.6; }
 
-    .rich-editor img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 10px 0; }
+    .rich-editor img { 
+      max-width: 300px; /* Limit image width */
+      max-height: 300px; /* Limit image height */
+      display: block; /* Make images block elements */
+      margin: 10px 0; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+      float: left; /* Float images to allow text wrapping */
+      margin-right: 10px; /* Add space after image */
+      margin-bottom: 10px; /* Add space below image */
+      clear: both; /* Clear float after multiple images */
+    }
     .rich-editor blockquote { 
       border-left: 4px solid var(--green-3); margin: 10px 0; padding-left: 10px; 
       color: #666; font-style: italic; background: rgba(0,0,0,0.02); 
@@ -231,7 +244,7 @@
     .sticker:active { cursor: grabbing; }
     .sticker-content { font-size: 40px; line-height: 1; pointer-events: none; }
     
-    /* Control Handles (Visible on Desktop) */
+    /* Control Handles (Simplified to 4 buttons) */
     .sticker-controls {
       position: absolute; inset: -15px; border: 2px dashed #8ecf9a; border-radius: 8px;
       display: none; pointer-events: none;
@@ -259,7 +272,7 @@
       border-color: #4D89FF;
     }
     
-    /* Rotation and Resize Handles */
+    /* Rotation Handle (Simplified) */
     .ctrl-rotate {
       position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
       width: 24px; height: 24px; background: white; border: 1px solid #ddd;
@@ -268,15 +281,13 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
     }
     
+    /* Resize Handle (Simplified - single handle for corner) */
     .ctrl-resize {
-      position: absolute; width: 16px; height: 16px; background: white; border: 1px solid #ddd;
-      border-radius: 50%; pointer-events: auto; cursor: pointer;
+      position: absolute; bottom: -8px; right: -8px;
+      width: 16px; height: 16px; background: white; border: 1px solid #ddd;
+      border-radius: 50%; pointer-events: auto; cursor: se-resize;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
     }
-    .ctrl-resize.tl { top: -8px; left: -8px; cursor: nw-resize; }
-    .ctrl-resize.tr { top: -8px; right: -8px; cursor: ne-resize; }
-    .ctrl-resize.bl { bottom: -8px; left: -8px; cursor: sw-resize; }
-    .ctrl-resize.br { bottom: -8px; right: -8px; cursor: se-resize; }
 
     /* --- MEGA PANEL --- */
     .mega-panel {
@@ -383,6 +394,17 @@
     .page-btn.active { background: var(--green-3); color: white; border-color: var(--green-3); }
     .page-btn.add-page { background: var(--green-3); color: white; border-color: var(--green-3); }
 
+    /* Screenshot button */
+    .screenshot-btn {
+      position: absolute; top: 10px; right: 10px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--green-3); color: white;
+      border: none; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
     /* Mobile optimizations */
     @media(max-width: 767px) {
       .top-toolbar-container {
@@ -473,6 +495,11 @@
 
   <div class="editor-workspace">
     <div class="paper-container" id="paperContainer">
+      <!-- Screenshot button -->
+      <button class="screenshot-btn" id="screenshotBtn" title="Screenshot">
+        <i class="fas fa-camera"></i>
+      </button>
+      
       <div class="paper-pattern" id="paperPattern"></div>
       <div class="sticker-layer back" id="stickerLayerBack"></div>
       <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="false" placeholder="Tulis sesuatu yang indah..."></div>
@@ -546,7 +573,8 @@
     fullscreenBtn: $('fullscreenBtn'), exportBtn: $('exportBtn'), 
     importBtn: $('importBtn'), importFileInput: $('importFileInput'),
     modeSelection: $('modeSelection'), listFullscreenBtn: $('listFullscreenBtn'),
-    pageNav: $('pageNav'), addPageBtn: $('addPageBtn')
+    pageNav: $('pageNav'), addPageBtn: $('addPageBtn'),
+    screenshotBtn: $('screenshotBtn')
   };
 
   // --- INIT ---
@@ -665,6 +693,9 @@
       pageNavAddBtn.addEventListener('click', addNewPage);
     }
     
+    // Screenshot button
+    elements.screenshotBtn.addEventListener('click', takeScreenshot);
+    
     // Prevent Enter key from creating new lines beyond 55
     elements.editor.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
@@ -730,7 +761,7 @@
       })
       .catch(error => {
         console.error('Error loading OpenMoji data:', error);
-        // Fallback to a smaller set if the main one fails
+        // Fallback to a smaller set if main one fails
         openmojiData = [
           { emoji: "🌿", tags: ["nature", "plant"] },
           { emoji: "🌸", tags: ["nature", "flower"] },
@@ -1108,14 +1139,19 @@
       const f = e.target.files[0];
       if(f) {
         const r = new FileReader();
-        r.onload = ev => { restoreSelection(); document.execCommand('insertImage', false, ev.target.result); saveSelection(); };
+        r.onload = ev => { 
+          restoreSelection(); 
+          const imgHtml = `<img src="${ev.target.result}" style="max-width:300px; max-height:300px; display:block; margin:10px 0; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); float:left; margin-right:10px; margin-bottom:10px; clear:both;">`;
+          document.execCommand('insertHTML', false, imgHtml); 
+          saveSelection(); 
+        };
         r.readAsDataURL(f);
       }
     };
     input.click();
   }
 
-  // --- STICKER ENGINE (Advanced Gestures) ---
+  // --- STICKER ENGINE (Simplified with 4 controls) ---
   function addSticker(emoji) {
     const s = { 
       id: 's'+Date.now(), 
@@ -1152,10 +1188,7 @@
         <div class="ctrl-btn ctrl-del"><i class="fas fa-times"></i></div>
         <div class="ctrl-btn ctrl-layer"><i class="fas fa-layer-group"></i></div>
         <div class="ctrl-rotate"><i class="fas fa-sync-alt"></i></div>
-        <div class="ctrl-resize tl"></div>
-        <div class="ctrl-resize tr"></div>
-        <div class="ctrl-resize bl"></div>
-        <div class="ctrl-resize br"></div>
+        <div class="ctrl-resize"></div>
       </div>
     `;
 
@@ -1255,7 +1288,7 @@
       autoSave();
     });
     
-    // Rotate handle - Fixed implementation
+    // Rotate handle
     el.querySelector('.ctrl-rotate').addEventListener('mousedown', (e) => {
       e.stopPropagation();
       selectSticker(el);
@@ -1281,42 +1314,33 @@
       document.addEventListener('mouseup', onRotateEnd);
     });
     
-    // Resize handles
-    el.querySelectorAll('.ctrl-resize').forEach(handle => {
-      handle.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        selectSticker(el);
+    // Resize handle
+    el.querySelector('.ctrl-resize').addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      selectSticker(el);
+      
+      const startScale = parseFloat(el.dataset.scale) || 1;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      
+      const onResizeMove = (e) => {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        const delta = Math.max(deltaX, deltaY);
         
-        const startScale = parseFloat(el.dataset.scale) || 1;
-        const startX = e.clientX;
-        const startY = e.clientY;
-        
-        const onResizeMove = (e) => {
-          const deltaX = e.clientX - startX;
-          const deltaY = e.clientY - startY;
-          const delta = Math.max(deltaX, deltaY);
-          
-          // Different resize behavior based on which handle is used
-          let scaleChange = 0;
-          if (handle.classList.contains('br')) scaleChange = delta / 100;
-          else if (handle.classList.contains('bl')) scaleChange = -delta / 100;
-          else if (handle.classList.contains('tr')) scaleChange = delta / 100;
-          else if (handle.classList.contains('tl')) scaleChange = -delta / 100;
-          
-          const newScale = Math.max(0.5, Math.min(5, startScale + scaleChange));
-          el.style.transform = `rotate(${el.dataset.rot}deg) scale(${newScale})`;
-          el.dataset.scale = newScale;
-        };
-        
-        const onResizeEnd = () => {
-          document.removeEventListener('mousemove', onResizeMove);
-          document.removeEventListener('mouseup', onResizeEnd);
-          autoSave();
-        };
-        
-        document.addEventListener('mousemove', onResizeMove);
-        document.addEventListener('mouseup', onResizeEnd);
-      });
+        const newScale = Math.max(0.5, Math.min(5, startScale + (delta / 100)));
+        el.style.transform = `rotate(${el.dataset.rot}deg) scale(${newScale})`;
+        el.dataset.scale = newScale;
+      };
+      
+      const onResizeEnd = () => {
+        document.removeEventListener('mousemove', onResizeMove);
+        document.removeEventListener('mouseup', onResizeEnd);
+        autoSave();
+      };
+      
+      document.addEventListener('mousemove', onResizeMove);
+      document.addEventListener('mouseup', onResizeEnd);
     });
   }
 
@@ -1445,6 +1469,39 @@
     updatePageNavigation();
     switchToPage(newPageNum);
     autoSave();
+  }
+
+  // --- SCREENSHOT FUNCTION ---
+  function takeScreenshot() {
+    // Save current page before taking screenshot
+    autoSave();
+    
+    // Use html2canvas to capture the paper container
+    html2canvas(elements.paper, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      scale: 1,
+      logging: false,
+      width: elements.paper.offsetWidth,
+      height: elements.paper.offsetHeight
+    }).then(canvas => {
+      // Convert canvas to blob
+      canvas.toBlob(blob => {
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `zeli_garden_page_${currentPage}_${new Date().toISOString().slice(0,10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }).catch(error => {
+      console.error('Error taking screenshot:', error);
+      alert('Gagal mengambil screenshot. Silakan coba lagi.');
+    });
   }
 
   // --- PANELS & THEMES ---
