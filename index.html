@@ -271,6 +271,14 @@
       color: white;
       border-color: #4D89FF;
     }
+    .ctrl-move {
+      top: -16px; 
+      left: 50%; 
+      transform: translateX(-50%);
+      background: #4CAF50; 
+      color: white;
+      border-color: #4CAF50;
+    }
     
     /* Rotation Handle (Simplified) */
     .ctrl-rotate {
@@ -474,7 +482,7 @@
 
     /* Page navigation for multi-page notes */
     .page-nav {
-      position: fixed; bottom: 20px; right: 20px;
+      position: fixed; top: 80px; right: 20px;
       display: flex; gap: 10px; z-index: 15;
       background: rgba(255,255,255,0.9);
       padding: 8px 12px;
@@ -501,6 +509,41 @@
       z-index: 10;
     }
 
+    /* Import button in list view */
+    .import-btn {
+      position: absolute; bottom: 80px; right: 20px;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: #4D89FF; color: white;
+      border: none; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    /* Flaticon link */
+    .flaticon-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #f0f0f0;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #666;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+    
+    .flaticon-link:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .flaticon-link i {
+      margin-right: 5px;
+      color: #4CAF50;
+    }
+
     /* Mobile optimizations */
     @media(max-width: 767px) {
       .top-toolbar-container {
@@ -512,7 +555,7 @@
       .tool-btn { width: 45px; height: 45px; font-size: 18px; }
       .menu-trigger { width: 50px; height: 50px; font-size: 22px; }
       .page-nav {
-        bottom: 80px; /* Adjust for mobile toolbar */
+        top: 80px; /* Adjust for mobile toolbar */
       }
     }
 
@@ -554,6 +597,11 @@
   <!-- Fullscreen button for list view -->
   <button class="list-fullscreen-btn" id="listFullscreenBtn" title="Fullscreen">
     <i class="fas fa-expand"></i>
+  </button>
+  
+  <!-- Import button for list view -->
+  <button class="import-btn" id="listImportBtn" title="Import Notes">
+    <i class="fas fa-upload"></i>
   </button>
 </div>
 
@@ -602,11 +650,17 @@
       <div class="sticker-layer front" id="stickerLayerFront"></div>
     </div>
     
-    <!-- Page navigation -->
+    <!-- Page navigation moved to top -->
     <div class="page-nav" id="pageNav" style="display:none;">
+      <button class="page-btn" id="prevPageBtn" title="Previous Page">
+        <i class="fas fa-chevron-left"></i>
+      </button>
       <button class="page-btn active" data-page="1">1</button>
       <button class="page-btn add-page" title="Add Page">
         <i class="fas fa-plus"></i>
+      </button>
+      <button class="page-btn" id="nextPageBtn" title="Next Page">
+        <i class="fas fa-chevron-right"></i>
       </button>
     </div>
   </div>
@@ -637,6 +691,10 @@
 <!-- Hidden file input for custom sticker upload -->
 <input type="file" id="customStickerInput" style="display:none" accept="image/png,image/webp">
 
+<!-- SOUND FILES -->
+<audio id="sfxClick" src="sounds/click.mp3" preload="auto"></audio>
+<audio id="sfxPage" src="sounds/page.wav" preload="auto"></audio>
+
 <script>
   // --- HELPERS ---
   const $ = id => document.getElementById(id);
@@ -662,6 +720,7 @@
   let notePages = {}; // Track pages for each note
   let noteHeight = 1760; // Fixed note height for 55 lines (55 * 32px)
   let noteWidth = 800; // Fixed note width
+  let pageSwitchTimeout = null; // For page navigation delay
 
   // --- ELEMENTS ---
   const elements = {
@@ -674,7 +733,9 @@
     importBtn: $('importBtn'), importFileInput: $('importFileInput'),
     modeSelection: $('modeSelection'), listFullscreenBtn: $('listFullscreenBtn'),
     pageNav: $('pageNav'), addPageBtn: $('addPageBtn'),
-    screenshotBtn: $('screenshotBtn'), customStickerInput: $('customStickerInput')
+    screenshotBtn: $('screenshotBtn'), customStickerInput: $('customStickerInput'),
+    listImportBtn: $('listImportBtn'),
+    prevPageBtn: $('prevPageBtn'), nextPageBtn: $('nextPageBtn')
   };
 
   // --- INIT ---
@@ -709,6 +770,15 @@
         e.preventDefault();
       }
     }, { passive: false });
+    
+    // Register Service Worker for offline functionality
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('✅ Offline siap'))
+          .catch(err => console.error('❌ SW error', err));
+      });
+    }
   });
 
   function selectMode(mode) {
@@ -748,6 +818,9 @@
     elements.exportBtn.addEventListener('click', exportNotes);
     elements.importBtn.addEventListener('click', () => elements.importFileInput.click());
     elements.importFileInput.addEventListener('change', importNotes);
+    
+    // List view import button
+    elements.listImportBtn.addEventListener('click', () => elements.importFileInput.click());
 
     // Panel Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -776,12 +849,29 @@
     
     // Page navigation
     elements.pageNav.addEventListener('click', (e) => {
-      if (e.target.classList.contains('page-btn') && !e.target.id) {
+      if (e.target.classList.contains('page-btn') && !e.target.id && e.target.dataset.page) {
         const page = parseInt(e.target.dataset.page);
         if (page !== currentPage) {
           switchToPage(page);
         }
       }
+    });
+    
+    // Previous/Next page buttons
+    elements.prevPageBtn.addEventListener('click', () => {
+      playClick();
+      if (pageSwitchTimeout) clearTimeout(pageSwitchTimeout);
+      pageSwitchTimeout = setTimeout(() => {
+        navigatePage('prev');
+      }, 300);
+    });
+    
+    elements.nextPageBtn.addEventListener('click', () => {
+      playClick();
+      if (pageSwitchTimeout) clearTimeout(pageSwitchTimeout);
+      pageSwitchTimeout = setTimeout(() => {
+        navigatePage('next');
+      }, 300);
     });
     
     // Add page button in toolbar
@@ -1415,6 +1505,7 @@
       <div class="sticker-controls">
         <div class="ctrl-btn ctrl-del"><i class="fas fa-times"></i></div>
         <div class="ctrl-btn ctrl-layer"><i class="fas fa-layer-group"></i></div>
+        <div class="ctrl-btn ctrl-move"><i class="fas fa-arrows-alt"></i></div>
         <div class="ctrl-rotate"><i class="fas fa-sync-alt"></i></div>
         <div class="ctrl-resize"></div>
       </div>
@@ -1516,6 +1607,38 @@
       autoSave();
     });
     
+    // Move button
+    el.querySelector('.ctrl-move').addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectSticker(el);
+      
+      // Enter move mode
+      el.style.cursor = 'move';
+      
+      const onMouseMove = (e) => {
+        const rect = elements.paper.getBoundingClientRect();
+        const x = e.clientX - rect.left - 30; // Center the sticker
+        const y = e.clientY - rect.top - 30;
+        
+        // Keep sticker within paper bounds
+        const maxX = rect.width - 60;
+        const maxY = rect.height - 60;
+        
+        el.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
+        el.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
+      };
+      
+      const onMouseUp = () => {
+        el.style.cursor = 'grab';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        autoSave();
+      };
+      
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+    
     // Rotate handle
     el.querySelector('.ctrl-rotate').addEventListener('mousedown', (e) => {
       e.stopPropagation();
@@ -1609,29 +1732,17 @@
     
     if (pages > 1) {
       pageNav.style.display = 'flex';
-      pageNav.innerHTML = '';
       
-      // Get sorted page numbers
-      const pageNumbers = Object.keys(currentNote.pages || {}).map(Number).sort((a, b) => a - b);
-      
-      pageNumbers.forEach(pageNum => {
-        const btn = document.createElement('button');
-        btn.className = 'page-btn';
-        if (pageNum === currentPage) btn.classList.add('active');
-        btn.dataset.page = pageNum;
-        btn.textContent = pageNum;
-        pageNav.appendChild(btn);
+      // Update page buttons
+      const pageButtons = pageNav.querySelectorAll('.page-btn[data-page]');
+      pageButtons.forEach(btn => {
+        const pageNum = parseInt(btn.dataset.page);
+        if (pageNum === currentPage) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
       });
-      
-      // Add new page button
-      const addBtn = document.createElement('button');
-      addBtn.className = 'page-btn add-page';
-      addBtn.innerHTML = '<i class="fas fa-plus"></i>';
-      addBtn.title = 'Add Page';
-      pageNav.appendChild(addBtn);
-      
-      // Re-attach event listener to new button
-      addBtn.addEventListener('click', addNewPage);
     } else {
       pageNav.style.display = 'none';
     }
@@ -1647,13 +1758,7 @@
     currentPage = pageNum;
     
     // Update page navigation
-    document.querySelectorAll('.page-btn').forEach(btn => {
-      if (parseInt(btn.dataset.page) === pageNum) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
+    updatePageNavigation();
     
     // Clear sticker layers
     elements.layerBack.innerHTML = '';
@@ -1678,6 +1783,26 @@
         sticker.style.display = 'none';
       }
     });
+  }
+
+  function navigatePage(direction) {
+    if (!currentNote) return;
+    
+    // Get all page numbers
+    const pageNumbers = Object.keys(currentNote.pages || {}).map(Number).sort((a, b) => a - b);
+    
+    if (pageNumbers.length <= 1) return;
+    
+    // Find current page index
+    const currentIndex = pageNumbers.indexOf(currentPage);
+    
+    if (direction === 'prev' && currentIndex > 0) {
+      switchToPage(pageNumbers[currentIndex - 1]);
+      playPage();
+    } else if (direction === 'next' && currentIndex < pageNumbers.length - 1) {
+      switchToPage(pageNumbers[currentIndex + 1]);
+      playPage();
+    }
   }
 
   function addNewPage() {
@@ -1787,6 +1912,9 @@
           <p>• Stiker akan tersimpan di catatan ini</p>
           <p><strong>Tips:</strong> Gunakan gambar PNG dengan background transparan agar stiker terlihat rapi ✨</p>
         </div>
+        <a href="https://www.flaticon.com/stickers" target="_blank" class="flaticon-link">
+          <i class="fas fa-external-link-alt"></i> Cari stiker di Flaticon
+        </a>
       `;
       elements.panelContent.appendChild(uploadSection);
       
@@ -2006,6 +2134,21 @@
     elements.pattern.style.backgroundSize = type === 'grid' ? '20px 20px' : '100% 32px';
     autoSave();
     closePanel(); // Close panel after applying paper style
+  }
+
+  // --- SOUND FUNCTIONS ---
+  function playClick() {
+    const a = document.getElementById('sfxClick');
+    a.currentTime = 0;
+    a.volume = 0.3;
+    a.play();
+  }
+
+  function playPage() {
+    const a = document.getElementById('sfxPage');
+    a.currentTime = 0;
+    a.volume = 0.4;
+    a.play();
   }
 
   function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }}
