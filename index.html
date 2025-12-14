@@ -704,8 +704,7 @@
     </div>
   </div>
 
-  <div class="notes-list-view" id="notesList"></div>
-  
+  <div class="notes-list-view" id="notesList"></div>  
   <!-- Fullscreen button for list view -->
   <button class="list-fullscreen-btn" id="listFullscreenBtn" title="Fullscreen">
     <i class="fas fa-expand"></i>
@@ -1512,7 +1511,7 @@
           localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
           localStorage.setItem(CUSTOM_STICKERS_KEY, JSON.stringify(customStickers));
           
-          // Refresh the UI
+          // Refresh UI
           renderList();
           alert('Import berhasil! ' + 
                 (mergeChoice ? 'Catatan dan stiker baru telah ditambahkan.' : 'Semua catatan telah diganti.'));
@@ -1796,8 +1795,21 @@
         const p = e.type.includes('mouse') ? e : e.touches[0];
         const dx = p.clientX - startX;
         const dy = p.clientY - startY;
-        el.style.left = (parseFloat(el.dataset.startX) + dx) + 'px';
-        el.style.top = (parseFloat(el.dataset.startY) + dy) + 'px';
+        
+        // Get note content dimensions
+        const rect = elements.paper.getBoundingClientRect();
+        const stickerRect = el.getBoundingClientRect();
+        
+        // Calculate new position
+        let newX = parseFloat(el.dataset.startX) + dx;
+        let newY = parseFloat(el.dataset.startY) + dy;
+        
+        // Constrain to note content area
+        newX = Math.max(0, Math.min(newX, rect.width - stickerRect.width));
+        newY = Math.max(0, Math.min(newY, rect.height - stickerRect.height));
+        
+        el.style.left = newX + 'px';
+        el.style.top = newY + 'px';
       }
     };
 
@@ -1841,7 +1853,7 @@
       
       const onMouseMove = (e) => {
         const rect = elements.paper.getBoundingClientRect();
-        const x = e.clientX - rect.left - 30; // Center the sticker
+        const x = e.clientX - rect.left - 30; // Center sticker
         const y = e.clientY - rect.top - 30;
         
         // Keep sticker within paper bounds
@@ -1988,7 +2000,7 @@
     elements.layerBack.innerHTML = '';
     elements.layerFront.innerHTML = '';
     
-    // Load the target page content
+    // Load target page content
     const targetPageData = currentNote.pages[pageNum] || {
       content: '',
       stickers: []
@@ -2156,10 +2168,10 @@
           stickerItem.className = 'custom-sticker-item';
           stickerItem.innerHTML = `
             <img src="${sticker.dataUrl}" alt="${sticker.name}">
-            <button class="delete-sticker-btn" onclick="deleteCustomSticker('${sticker.id}')">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
+              <button class="delete-sticker-btn" onclick="deleteCustomSticker('${sticker.id}')">
+                <i class="fas fa-times"></i>
+              </button>
+            `;
           
           // Add click event to add sticker to note
           stickerItem.addEventListener('click', (e) => {
@@ -2375,7 +2387,7 @@
     a.play();
   }
 
-  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }}
+  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }}
 </script>
 </body>
 </html>
