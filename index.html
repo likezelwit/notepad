@@ -1333,6 +1333,10 @@
   }
 
   function loadNoteData() {
+    // 1. CLEAN STICKERS FIRST (The Fix)
+    elements.layerBack.innerHTML = '';
+    elements.layerFront.innerHTML = '';
+
     elements.title.value = currentNote.title;
     
     // Load current page data
@@ -1342,8 +1346,12 @@
     };
     
     elements.editor.innerHTML = currentPageData.content;
-    applyTheme(currentNote.theme, false);
-    applyPaper(currentNote.paper);
+    
+    // Apply Theme & Paper with try-catch
+    try {
+      applyTheme(currentNote.theme, false);
+      applyPaper(currentNote.paper);
+    } catch(e) { console.error("Theme load error", e); }
     
     // Set fixed dimensions for paper
     elements.paper.style.width = currentNote.width ? `${currentNote.width}px` : '100%';
@@ -1353,12 +1361,11 @@
     // Update page navigation
     updatePageNavigation();
     
-    // Clear sticker layers completely before adding new stickers
-    elements.layerBack.innerHTML = '';
-    elements.layerFront.innerHTML = '';
-    
     // Render stickers for current page only
-    (currentPageData.stickers || []).forEach(renderSticker);
+    if (currentPageData.stickers && Array.isArray(currentPageData.stickers)) {
+      currentPageData.stickers.forEach(renderSticker);
+    }
+    
     savedRange = null;
   }
 
@@ -1428,11 +1435,23 @@
     if (!hasContent && isNewNote) {
       // Don't save empty new notes, just close
       elements.editorView.classList.remove('active');
+      // Bersihkan saat keluar
+      elements.layerBack.innerHTML = '';
+      elements.layerFront.innerHTML = '';
       return;
     }
     
     autoSave();
     elements.editorView.classList.remove('active');
+    
+    // THE FIX: Clean up after animation to prevent ghosting on next open
+    setTimeout(() => {
+        elements.editor.innerHTML = '';
+        elements.layerBack.innerHTML = '';
+        elements.layerFront.innerHTML = '';
+        elements.title.value = '';
+    }, 300);
+
     renderList();
   }
 
