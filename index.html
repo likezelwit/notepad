@@ -922,7 +922,7 @@
 
 <!-- SOUND FILES - Using inline data URIs to avoid 404 errors -->
 <audio id="sfxClick" preload="auto">
-  <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMz//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAQKAAAAAAAAA4YJCGYZn///////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAQKAAAAAAAAA4YJCGYZn///////////8=" type="audio/mpeg">
+  <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMz//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAQKAAAAAAAAA4YJCGYZn///////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAQKAAAAAAAAA4YJCGYZn///////////8=" type="audio/mpeg">
 </audio>
 <audio id="sfxPage" preload="auto">
   <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBiuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
@@ -1353,7 +1353,7 @@
     // Update page navigation
     updatePageNavigation();
     
-    // Clear sticker layers
+    // Clear sticker layers completely before adding new stickers
     elements.layerBack.innerHTML = '';
     elements.layerFront.innerHTML = '';
     
@@ -2128,51 +2128,22 @@
     if (!currentNote) return;
     
     // Get the number of pages
-    const pages = Object.keys(currentNote.pages || {}).map(Number).sort((a, b) => a - b);
+    const pages = Object.keys(currentNote.pages || {}).length;
     const pageNav = elements.pageNav;
     
-    if (pages.length > 1) {
+    if (pages > 1) {
       pageNav.style.display = 'flex';
       
-      // Clear existing page buttons (except prev, next, and add buttons)
-      const existingPageBtns = pageNav.querySelectorAll('.page-btn[data-page]');
-      existingPageBtns.forEach(btn => btn.remove());
-      
-      // Add page buttons for each page
-      const addPageBtn = pageNav.querySelector('.add-page');
-      pages.forEach(pageNum => {
-        const pageBtn = document.createElement('button');
-        pageBtn.className = 'page-btn';
-        pageBtn.dataset.page = pageNum;
-        pageBtn.textContent = pageNum;
-        
+      // Update page buttons
+      const pageButtons = pageNav.querySelectorAll('.page-btn[data-page]');
+      pageButtons.forEach(btn => {
+        const pageNum = parseInt(btn.dataset.page);
         if (pageNum === currentPage) {
-          pageBtn.classList.add('active');
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
         }
-        
-        // Insert before the add page button
-        pageNav.insertBefore(pageBtn, addPageBtn);
       });
-      
-      // Update prev/next button states
-      const prevBtn = elements.prevPageBtn;
-      const nextBtn = elements.nextPageBtn;
-      
-      if (currentPage === pages[0]) {
-        prevBtn.style.opacity = '0.5';
-        prevBtn.style.cursor = 'default';
-      } else {
-        prevBtn.style.opacity = '1';
-        prevBtn.style.cursor = 'pointer';
-      }
-      
-      if (currentPage === pages[pages.length - 1]) {
-        nextBtn.style.opacity = '0.5';
-        nextBtn.style.cursor = 'default';
-      } else {
-        nextBtn.style.opacity = '1';
-        nextBtn.style.cursor = 'pointer';
-      }
     } else {
       pageNav.style.display = 'none';
     }
